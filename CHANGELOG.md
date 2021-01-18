@@ -3,6 +3,7 @@
 ### Features
 
 ### Fixes
+- [#3577](https://github.com/poanetwork/blockscout/pull/3577) - Eliminate GraphiQL page XSS attack
 
 - [#3457](https://github.com/poanetwork/blockscout/pull/3457) - Fix endless block invalidation issue
 - [#3457](https://github.com/poanetwork/blockscout/pull/3457) - Fix doubled total transferred/minted/burnt tokens on transaction page if block has reorg
