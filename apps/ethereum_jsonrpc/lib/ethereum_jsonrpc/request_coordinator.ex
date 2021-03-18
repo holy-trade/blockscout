@@ -56,6 +56,8 @@ defmodule EthereumJSONRPC.RequestCoordinator do
 
   require EthereumJSONRPC.Tracer
 
+  require Logger
+
   alias EthereumJSONRPC.{RollingWindow, Tracer, Transport}
 
   @error_key :throttleable_error_count
@@ -81,13 +83,13 @@ defmodule EthereumJSONRPC.RequestCoordinator do
 
       case throttle_request(remaining_wait_time) do
         :ok ->
-          IO.inspect(request)
+          Logger.error(fn -> ["Request: ", inspect(request)] end)
           reply = trace_request(request, fn ->
             request
             |> transport.json_rpc(transport_options)
             |> handle_transport_response()
           end)
-          IO.inspect(reply)
+          Logger.error(fn -> ["Reply: ", inspect(reply)] end)
           reply
 
         :error ->
