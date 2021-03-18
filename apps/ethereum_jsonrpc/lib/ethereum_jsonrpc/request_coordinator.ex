@@ -81,11 +81,14 @@ defmodule EthereumJSONRPC.RequestCoordinator do
 
       case throttle_request(remaining_wait_time) do
         :ok ->
-          trace_request(request, fn ->
+          IO.inspect(request)
+          reply = trace_request(request, fn ->
             request
             |> transport.json_rpc(transport_options)
             |> handle_transport_response()
           end)
+          IO.inspect(reply)
+          reply
 
         :error ->
           {:error, :timeout}
