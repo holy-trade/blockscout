@@ -51,7 +51,7 @@ defmodule Explorer.Celo.Util do
   def get_address(name) do
     case get_address_raw(name) do
       {:ok, address} -> {:ok, "0x" <> Base.encode16(address, case: :lower)}
-      _ -> :error
+      _ -> {:ok, "0x0000000000000000000000000000000000000000"}
     end
   end
 

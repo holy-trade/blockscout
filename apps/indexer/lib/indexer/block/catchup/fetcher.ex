@@ -206,7 +206,7 @@ defmodule Indexer.Block.Catchup.Fetcher do
       {:error, {step, reason}} = error ->
         Logger.error(
           fn ->
-            ["failed to fetch: ", inspect(reason), ". Retrying."]
+            ["failed to fetch: ", inspect(reason), " ", inspect(step), ". Retrying."]
           end,
           step: step
         )

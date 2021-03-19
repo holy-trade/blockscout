@@ -142,9 +142,9 @@ defmodule Indexer.Block.Fetcher do
   end
 
   defp read_addresses do
-    with {:ok, gold_token} <- Util.get_address("GoldToken"),
-         {:ok, stable_token} <- Util.get_address("StableToken"),
-         {:ok, oracle_address} <- Util.get_address("SortedOracles") do
+    with {:gold_token, {:ok, gold_token}} <- {:gold_token, Util.get_address("GoldToken")},
+         {:stable_token, {:ok, stable_token}} <- {:stable_token, Util.get_address("StableToken")},
+         {:oracle, {:ok, oracle_address}} <- {:oracle, Util.get_address("SortedOracles")} do
       {:ok, gold_token, stable_token, oracle_address}
     else
       err ->
@@ -183,11 +183,11 @@ defmodule Indexer.Block.Fetcher do
          transactions_with_receipts = Receipts.put(transactions_params_without_receipts, receipts),
          %{token_transfers: normal_token_transfers, tokens: normal_tokens} = TokenTransfers.parse(logs),
          gold_token_enabled = config(:enable_gold_token),
-         {:ok, gold_token, stable_token, oracle_address} <-
+         {:read_token, {:ok, gold_token, stable_token, oracle_address}} <-
            (if gold_token_enabled do
-              read_addresses()
+              {:read_token, read_addresses()}
             else
-              {:ok, nil, nil, nil}
+              {:read_token, {:ok, nil, nil, nil}}
             end),
          %{token_transfers: celo_token_transfers} =
            (if gold_token_enabled do
