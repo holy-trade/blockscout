@@ -91,7 +91,7 @@ defmodule EthereumJSONRPC.RequestCoordinator do
               |> handle_transport_response()
             end)
 
-          #          Logger.error(fn -> ["Reply: ", inspect(reply), "to", inspect(request)] end)
+          #         Logger.error(fn -> ["Reply: ", inspect(reply), "to", inspect(request)] end)
           reply
 
         :error ->
