@@ -20,8 +20,8 @@ RUN mix do deps.get, deps.compile
 ADD . .
 
 ARG COIN
-ARG DISABLE_WRITE_API="false"
-ARG DISABLE_INDEXER="false"
+ARG DISABLE_WRITE_API="true"
+ARG DISABLE_INDEXER="true"
 ARG DISABLE_WEBAPP="false"
 RUN if [ "$COIN" != "" ]; then sed -i s/"POA"/"${COIN}"/g apps/block_scout_web/priv/gettext/en/LC_MESSAGES/default.po; fi
 
