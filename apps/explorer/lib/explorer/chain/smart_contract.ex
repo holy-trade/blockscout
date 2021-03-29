@@ -192,8 +192,7 @@ defmodule Explorer.Chain.SmartContract do
     produce `address` `t:Explorer.Chain.Address.t/0` `contract_code`.
   * `abi` - The [JSON ABI specification](https://solidity.readthedocs.io/en/develop/abi-spec.html#json) for this
     contract.
-  * `proxy_address` - if the contract is behind a proxy, the address of that proxy contract
-
+  * `verified_via_sourcify` - whether contract verified through Sourcify utility or not.
   """
 
   @type t :: %Explorer.Chain.SmartContract{
@@ -204,7 +203,8 @@ defmodule Explorer.Chain.SmartContract do
           constructor_arguments: String.t() | nil,
           evm_version: String.t() | nil,
           optimization_runs: non_neg_integer() | nil,
-          abi: [function_description]
+          abi: [function_description],
+          verified_via_sourcify: boolean | nil
         }
 
   schema "smart_contracts" do
@@ -217,6 +217,7 @@ defmodule Explorer.Chain.SmartContract do
     field(:optimization_runs, :integer)
     embeds_many(:external_libraries, ExternalLibrary)
     field(:abi, {:array, :map})
+    field(:verified_via_sourcify, :boolean)
 
     has_many(
       :decompiled_smart_contracts,
@@ -250,27 +251,35 @@ defmodule Explorer.Chain.SmartContract do
       :abi,
       :constructor_arguments,
       :evm_version,
-      :optimization_runs
+      :optimization_runs,
+      :verified_via_sourcify
     ])
     |> validate_required([:name, :compiler_version, :optimization, :contract_source_code, :abi, :address_hash])
     |> unique_constraint(:address_hash)
     |> prepare_changes(&upsert_contract_methods/1)
   end
 
-  def invalid_contract_changeset(%__MODULE__{} = smart_contract, attrs, error) do
-    smart_contract
-    |> cast(attrs, [
-      :name,
-      :compiler_version,
-      :optimization,
-      :contract_source_code,
-      :address_hash,
-      :evm_version,
-      :optimization_runs,
-      :constructor_arguments
-    ])
-    |> validate_required([:name, :compiler_version, :optimization, :address_hash])
-    |> add_error(:contract_source_code, error_message(error))
+  def invalid_contract_changeset(%__MODULE__{} = smart_contract, attrs, error, error_message) do
+    validated =
+      smart_contract
+      |> cast(attrs, [
+        :name,
+        :compiler_version,
+        :optimization,
+        :contract_source_code,
+        :address_hash,
+        :evm_version,
+        :optimization_runs,
+        :constructor_arguments,
+        :verified_via_sourcify
+      ])
+      |> validate_required([:name, :compiler_version, :optimization, :address_hash])
+
+    if error_message do
+      add_error(validated, :contract_source_code, error_message(error, error_message))
+    else
+      add_error(validated, :contract_source_code, error_message(error))
+    end
   end
 
   def add_submitted_comment(code, inserted_at) when is_binary(code) do
