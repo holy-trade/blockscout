@@ -877,6 +877,37 @@ defmodule Explorer.Chain do
     Wei.to(gas_price, unit)
   end
 
+  defp augment_celo_address(orig_address) do
+    case orig_address do
+      nil ->
+        {:error, :not_found}
+
+      address ->
+        address2 =
+          if Ecto.assoc_loaded?(address.celo_delegator) and address.celo_delegator != nil do
+            Map.put(address, :celo_account, address.celo_delegator.celo_account)
+          else
+            address
+          end
+
+        address3 =
+          if Ecto.assoc_loaded?(address.celo_delegator) and address.celo_delegator != nil do
+            Map.put(address2, :celo_validator, address.celo_delegator.celo_validator)
+          else
+            address2
+          end
+
+        address4 =
+          if Ecto.assoc_loaded?(address.celo_delegator) and address.celo_delegator != nil do
+            Map.put(address3, :celo_attestation_stats, address.celo_delegator.celo_attestation_stats)
+          else
+            address3
+          end
+
+        {:ok, address4}
+    end
+  end
+
   @doc """
   Converts `t:Explorer.Chain.Address.t/0` `hash` to the `t:Explorer.Chain.Address.t/0` with that `hash`.
 
@@ -950,37 +981,38 @@ defmodule Explorer.Chain do
         where: address.hash == ^hash
       )
 
-    query
-    |> join_associations(necessity_by_association)
-    |> with_decompiled_code_flag(hash, query_decompiled_code_flag)
-    |> Repo.one()
-    |> case do
-      nil ->
-        {:error, :not_found}
+    address_result =
+      query
+      |> join_associations(necessity_by_association)
+      |> with_decompiled_code_flag(hash, query_decompiled_code_flag)
+      |> Repo.one()
 
-      address ->
-        address2 =
-          if Ecto.assoc_loaded?(address.celo_delegator) and address.celo_delegator != nil do
-            Map.put(address, :celo_account, address.celo_delegator.celo_account)
+    address_updated_result =
+      case address_result do
+        %{smart_contract: smart_contract} ->
+          if smart_contract do
+            address_result
           else
             address_verified_twin_contract = Chain.get_address_verified_twin_contract(hash).verified_contract
 
-        address3 =
-          if Ecto.assoc_loaded?(address.celo_delegator) and address.celo_delegator != nil do
-            Map.put(address2, :celo_validator, address.celo_delegator.celo_validator)
-          else
-            address2
+            if address_verified_twin_contract do
+              address_verified_twin_contract_updated =
+                address_verified_twin_contract
+                |> Map.put(:address_hash, hash)
+                |> Map.put_new(:metadata_from_verified_twin, true)
+
+              address_result
+              |> Map.put(:smart_contract, address_verified_twin_contract_updated)
+            else
+              address_result
+            end
           end
 
-        address4 =
-          if Ecto.assoc_loaded?(address.celo_delegator) and address.celo_delegator != nil do
-            Map.put(address3, :celo_attestation_stats, address.celo_delegator.celo_attestation_stats)
-          else
-            address3
-          end
+        _ ->
+          address_result
+      end
 
-        {:ok, address4}
-    end
+    augment_celo_address(address_updated_result)
   end
 
   def decompiled_code(address_hash, version) do
@@ -2942,28 +2974,6 @@ defmodule Explorer.Chain do
       insert_contract_query_with_additional_sources
       |> Repo.transaction()
 
-        Multi.new()
-        |> Multi.run(:set_address_verified, fn repo, _ -> set_address_verified(repo, address_hash) end)
-        |> Multi.run(:clear_primary_address_names, fn repo, _ -> clear_primary_address_names(repo, address_hash) end)
-        |> Multi.run(:insert_address_name, fn repo, _ ->
-          name = Changeset.get_field(smart_contract_changeset, :name)
-          create_address_name(repo, name, address_hash)
-        end)
-        |> Multi.run(:proxy_address_contract, fn repo, _ -> set_address_proxy(repo, proxy_address, address_hash) end)
-        |> Multi.insert(:smart_contract, smart_contract_changeset)
-        |> Repo.transaction()
-      else
-        Multi.new()
-        |> Multi.run(:set_address_verified, fn repo, _ -> set_address_verified(repo, address_hash) end)
-        |> Multi.run(:clear_primary_address_names, fn repo, _ -> clear_primary_address_names(repo, address_hash) end)
-        |> Multi.run(:insert_address_name, fn repo, _ ->
-          name = Changeset.get_field(smart_contract_changeset, :name)
-          create_address_name(repo, name, address_hash)
-        end)
-        |> Multi.insert(:smart_contract, smart_contract_changeset)
-        |> Repo.transaction()
-      end
-
     case insert_result do
       {:ok, %{smart_contract: smart_contract}} ->
         {:ok, smart_contract}
@@ -3091,7 +3101,7 @@ defmodule Explorer.Chain do
         contract_code = target_address.contract_code
 
         case contract_code do
-          %Chain.Data{bytes: contract_code_bytes} ->
+          %Explorer.Chain.Data{bytes: contract_code_bytes} ->
             contract_code_md5 =
               Base.encode16(:crypto.hash(:md5, "\\x" <> Base.encode16(contract_code_bytes, case: :lower)),
                 case: :lower
