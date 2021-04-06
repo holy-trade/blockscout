@@ -3015,21 +3015,21 @@ defmodule Explorer.Chain do
     end
   end
 
-  defp set_address_proxy(repo, proxy_address, implementation_address) do
-    params = %{
-      proxy_address: proxy_address,
-      implementation_address: implementation_address
-    }
+  # defp set_address_proxy(repo, proxy_address, implementation_address) do
+  #   params = %{
+  #     proxy_address: proxy_address,
+  #     implementation_address: implementation_address
+  #   }
 
-    Logger.debug(fn -> "Setting Proxy Address Mapping: #{proxy_address} - #{implementation_address}" end)
+  #   Logger.debug(fn -> "Setting Proxy Address Mapping: #{proxy_address} - #{implementation_address}" end)
 
-    %ProxyContract{}
-    |> ProxyContract.changeset(params)
-    |> repo.insert(
-      on_conflict: :replace_all,
-      conflict_target: [:proxy_address]
-    )
-  end
+  #   %ProxyContract{}
+  #   |> ProxyContract.changeset(params)
+  #   |> repo.insert(
+  #     on_conflict: :replace_all,
+  #     conflict_target: [:proxy_address]
+  #   )
+  # end
 
   defp clear_primary_address_names(repo, address_hash) do
     query =
