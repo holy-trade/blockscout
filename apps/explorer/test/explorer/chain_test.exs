@@ -4018,7 +4018,7 @@ defmodule Explorer.ChainTest do
     test "reduces with given reducer and accumulator" do
       today = DateTime.utc_now()
       yesterday = Timex.shift(today, days: -1)
-      %Token{contract_address_hash: catalog_address} = insert(:token, cataloged: true, updated_at: yesterday)
+      %Token{contract_address_hash: catalog_address} = insert(:token, cataloged: true, metadata_updated: yesterday)
       insert(:token, cataloged: false)
       assert Chain.stream_cataloged_token_contract_address_hashes([], &[&1 | &2], 1) == {:ok, [catalog_address]}
     end
@@ -4028,12 +4028,12 @@ defmodule Explorer.ChainTest do
       yesterday = Timex.shift(today, days: -1)
       two_days_ago = Timex.shift(today, days: -2)
 
-      token1 = insert(:token, %{cataloged: true, updated_at: yesterday})
-      token2 = insert(:token, %{cataloged: true, updated_at: two_days_ago})
+      token1 = insert(:token, %{cataloged: true, metadata_updated: yesterday})
+      token2 = insert(:token, %{cataloged: true, metadata_updated: two_days_ago})
 
       expected_response =
         [token1, token2]
-        |> Enum.sort(&(Timex.to_unix(&1.updated_at) < Timex.to_unix(&2.updated_at)))
+        |> Enum.sort(&(Timex.to_unix(&1.metadata_updated) < Timex.to_unix(&2.metadata_updated)))
         |> Enum.map(& &1.contract_address_hash)
 
       assert Chain.stream_cataloged_token_contract_address_hashes([], &(&2 ++ [&1]), 12) == {:ok, expected_response}

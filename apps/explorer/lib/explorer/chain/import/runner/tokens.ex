@@ -154,19 +154,20 @@ defmodule Explorer.Chain.Import.Runner.Tokens do
           # `holder_count` is not updated as a pre-existing token means the `holder_count` is already initialized OR
           #   need to be migrated with `priv/repo/migrations/scripts/update_new_tokens_holder_count_in_batches.sql.exs`
           # Don't update `contract_address_hash` as it is the primary key and used for the conflict target
+          metadata_updated: fragment("GREATEST(?, EXCLUDED.metadata_updated)", token.metadata_updated),
           inserted_at: fragment("LEAST(?, EXCLUDED.inserted_at)", token.inserted_at),
           updated_at: fragment("GREATEST(?, EXCLUDED.updated_at)", token.updated_at)
         ]
       ],
       where:
         fragment(
-          "(EXCLUDED.name, EXCLUDED.symbol, EXCLUDED.total_supply, EXCLUDED.decimals, EXCLUDED.type, EXCLUDED.updated_at, EXCLUDED.cataloged) IS DISTINCT FROM (?, ?, ?, ?, ?, ?, ?)",
+          "(EXCLUDED.name, EXCLUDED.symbol, EXCLUDED.total_supply, EXCLUDED.decimals, EXCLUDED.type, EXCLUDED.metadata_updated, EXCLUDED.cataloged) IS DISTINCT FROM (?, ?, ?, ?, ?, ?, ?)",
           token.name,
           token.symbol,
           token.total_supply,
           token.decimals,
           token.type,
-          token.updated_at,
+          token.metadata_updated,
           token.cataloged
         )
     )

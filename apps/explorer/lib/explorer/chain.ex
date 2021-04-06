@@ -3482,7 +3482,7 @@ defmodule Explorer.Chain do
       when is_function(reducer, 2) do
     seconds_ago_updated
     |> Token.cataloged_tokens()
-    |> order_by(asc: :updated_at)
+    |> order_by(asc: :metadata_updated)
     |> Repo.stream_reduce(initial, reducer)
   end
 

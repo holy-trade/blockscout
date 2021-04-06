@@ -10,7 +10,7 @@ defmodule Explorer.Chain.TokenTest do
     test "filters only cataloged tokens" do
       {:ok, date} = DateTime.now("Etc/UTC")
       hours_ago_date = DateTime.add(date, -:timer.hours(60), :millisecond)
-      token = insert(:token, cataloged: true, updated_at: hours_ago_date)
+      token = insert(:token, cataloged: true, metadata_updated: hours_ago_date)
       insert(:token, cataloged: false)
 
       assert Repo.all(Token.cataloged_tokens()) == [token.contract_address_hash]
@@ -20,7 +20,7 @@ defmodule Explorer.Chain.TokenTest do
       {:ok, date} = DateTime.now("Etc/UTC")
       hours_ago_date = DateTime.add(date, -:timer.hours(60), :millisecond)
 
-      token = insert(:token, cataloged: true, updated_at: hours_ago_date)
+      token = insert(:token, cataloged: true, metadata_updated: hours_ago_date)
       insert(:token, cataloged: true)
 
       assert Repo.all(Token.cataloged_tokens()) == [token.contract_address_hash]

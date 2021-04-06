@@ -43,6 +43,7 @@ defmodule Explorer.Chain.Token do
           decimals: non_neg_integer(),
           type: String.t(),
           cataloged: boolean(),
+          metadata_updated: DateTime.t(),
           contract_address: %Ecto.Association.NotLoaded{} | Address.t(),
           contract_address_hash: Hash.Address.t(),
           holder_count: non_neg_integer() | nil
@@ -65,6 +66,7 @@ defmodule Explorer.Chain.Token do
     field(:type, :string)
     field(:cataloged, :boolean)
     field(:holder_count, :integer)
+    field(:metadata_updated, :utc_datetime_usec)
 
     belongs_to(
       :contract_address,
@@ -112,7 +114,7 @@ defmodule Explorer.Chain.Token do
     from(
       token in __MODULE__,
       select: token.contract_address_hash,
-      where: token.cataloged == true and token.updated_at <= ^seconds_ago_date
+      where: token.cataloged == true and token.metadata_updated <= ^seconds_ago_date
     )
   end
 end

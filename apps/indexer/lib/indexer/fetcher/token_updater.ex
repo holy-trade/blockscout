@@ -88,6 +88,6 @@ defmodule Indexer.Fetcher.TokenUpdater do
 
   def update_metadata(%Token{} = token, metadata) do
     IO.inspect({:updating, token})
-    Chain.update_token(%{token | updated_at: DateTime.utc_now()}, metadata)
+    Chain.update_token(%{token | updated_at: DateTime.utc_now(), metadata_updated: DateTime.utc_now()}, metadata)
   end
 end
