@@ -314,9 +314,11 @@ defmodule Explorer.Chain.Address.TokenTest do
     end
 
     test "add more conditions to the query when PagingOptions.key is not nil" do
-      token1 = insert(:token, name: "token-a", type: "ERC-20", decimals: 0, symbol: "TA", metadata_updated: DateTime.utc_now())
+      token1 =
+        insert(:token, name: "token-a", type: "ERC-20", decimals: 0, symbol: "TA", metadata_updated: DateTime.utc_now())
 
-      token2 = insert(:token, name: "token-c", type: "ERC-721", decimals: 0, symbol: "TC", metadata_updated: DateTime.utc_now())
+      token2 =
+        insert(:token, name: "token-c", type: "ERC-721", decimals: 0, symbol: "TC", metadata_updated: DateTime.utc_now())
 
       options = %PagingOptions{key: {token2.name, token2.type, token2.inserted_at}}
 
@@ -328,9 +330,11 @@ defmodule Explorer.Chain.Address.TokenTest do
     end
 
     test "tokens with nil name come after other tokens of same type" do
-      token1 = insert(:token, name: "token-a", type: "ERC-20", decimals: 0, symbol: "TA", metadata_updated: DateTime.utc_now())
+      token1 =
+        insert(:token, name: "token-a", type: "ERC-20", decimals: 0, symbol: "TA", metadata_updated: DateTime.utc_now())
 
-      token2 = insert(:token, name: nil, type: "ERC-20", decimals: 0, symbol: "TC", metadata_updated: DateTime.utc_now())
+      token2 =
+        insert(:token, name: nil, type: "ERC-20", decimals: 0, symbol: "TC", metadata_updated: DateTime.utc_now())
 
       options = %PagingOptions{key: {token1.name, token1.type, token1.inserted_at}}
 

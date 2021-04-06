@@ -54,7 +54,6 @@ defmodule Indexer.Fetcher.TokenUpdater do
   @impl BufferedTask
   def run(entries, _json_rpc_named_arguments) do
     Logger.info("updating tokens")
-    IO.inspect(entries)
 
     entries
     |> Enum.map(&to_string/1)
@@ -87,7 +86,6 @@ defmodule Indexer.Fetcher.TokenUpdater do
   end
 
   def update_metadata(%Token{} = token, metadata) do
-    IO.inspect({:updating, token})
     Chain.update_token(%{token | updated_at: DateTime.utc_now(), metadata_updated: DateTime.utc_now()}, metadata)
   end
 end

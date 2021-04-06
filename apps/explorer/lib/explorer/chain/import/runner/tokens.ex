@@ -125,8 +125,6 @@ defmodule Explorer.Chain.Import.Runner.Tokens do
       |> Enum.sort_by(& &1.contract_address_hash)
       |> Enum.dedup_by(& &1.contract_address_hash)
 
-    # IO.inspect(ordered_changes_list)
-
     {:ok, _} =
       Import.insert_changes_list(
         repo,
