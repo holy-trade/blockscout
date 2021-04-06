@@ -125,6 +125,8 @@ defmodule Explorer.Chain.Import.Runner.Tokens do
       |> Enum.sort_by(& &1.contract_address_hash)
       |> Enum.dedup_by(& &1.contract_address_hash)
 
+    # IO.inspect(ordered_changes_list)
+
     {:ok, _} =
       Import.insert_changes_list(
         repo,
@@ -158,13 +160,13 @@ defmodule Explorer.Chain.Import.Runner.Tokens do
       ],
       where:
         fragment(
-          "(EXCLUDED.name, EXCLUDED.symbol, EXCLUDED.total_supply, EXCLUDED.decimals, EXCLUDED.type, EXCLUDED.cataloged) IS DISTINCT FROM (?, ?, ?, ?, ?, ?) AND ( EXCLUDED.cataloged OR NOT ? )",
+          "(EXCLUDED.name, EXCLUDED.symbol, EXCLUDED.total_supply, EXCLUDED.decimals, EXCLUDED.type, EXCLUDED.updated_at, EXCLUDED.cataloged) IS DISTINCT FROM (?, ?, ?, ?, ?, ?, ?)",
           token.name,
           token.symbol,
           token.total_supply,
           token.decimals,
           token.type,
-          token.cataloged,
+          token.updated_at,
           token.cataloged
         )
     )

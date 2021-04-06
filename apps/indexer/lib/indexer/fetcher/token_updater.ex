@@ -16,7 +16,7 @@ defmodule Indexer.Fetcher.TokenUpdater do
   @max_batch_size 10
   @max_concurrency 4
   @defaults [
-    poll_interval: :timer.seconds(3600),
+    poll_interval: :timer.seconds(20),
     flush_interval: :timer.seconds(3),
     max_concurrency: @max_concurrency,
     max_batch_size: @max_batch_size,
@@ -53,7 +53,8 @@ defmodule Indexer.Fetcher.TokenUpdater do
 
   @impl BufferedTask
   def run(entries, _json_rpc_named_arguments) do
-    Logger.debug("updating tokens")
+    Logger.info("updating tokens")
+    IO.inspect(entries)
 
     entries
     |> Enum.map(&to_string/1)
@@ -86,6 +87,7 @@ defmodule Indexer.Fetcher.TokenUpdater do
   end
 
   def update_metadata(%Token{} = token, metadata) do
+    IO.inspect({:updating, token})
     Chain.update_token(%{token | updated_at: DateTime.utc_now()}, metadata)
   end
 end
