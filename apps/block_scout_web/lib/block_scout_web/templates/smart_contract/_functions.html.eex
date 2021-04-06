@@ -1,4 +1,4 @@
-<% metadata_for_verification = Chain.get_address_verified_twin_contract(@address.hash).verified_contract %>
+<% metadata_for_verification = Explorer.Chain.get_address_verified_twin_contract(@address.hash).verified_contract %>
 <%= unless BlockScoutWeb.AddressView.smart_contract_verified?(@address) do %>
   <%= if metadata_for_verification do %>
     <% path = 

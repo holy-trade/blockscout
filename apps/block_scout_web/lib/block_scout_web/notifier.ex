@@ -41,7 +41,10 @@ defmodule BlockScoutWeb.Notifier do
           result
 
         {:error, changeset} ->
-          {:ok, compiler_versions} = CompilerVersion.fetch_versions()
+          compiler_versions =
+            case CompilerVersion.fetch_versions() do
+              {:ok, compiler_versions} ->
+                compiler_versions
 
               {:error, _} ->
                 []

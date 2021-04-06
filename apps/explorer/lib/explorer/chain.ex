@@ -993,7 +993,7 @@ defmodule Explorer.Chain do
           if smart_contract do
             address_result
           else
-            address_verified_twin_contract = Chain.get_address_verified_twin_contract(hash).verified_contract
+            address_verified_twin_contract = Explorer.Chain.get_address_verified_twin_contract(hash).verified_contract
 
             if address_verified_twin_contract do
               address_verified_twin_contract_updated =
@@ -1312,7 +1312,7 @@ defmodule Explorer.Chain do
           if smart_contract do
             address_result
           else
-            address_verified_twin_contract = Chain.get_address_verified_twin_contract(hash).verified_contract
+            address_verified_twin_contract = Explorer.Chain.get_address_verified_twin_contract(hash).verified_contract
 
             if address_verified_twin_contract do
               address_verified_twin_contract_updated =
@@ -3087,6 +3087,20 @@ defmodule Explorer.Chain do
     end
   end
 
+  def get_proxied_address(address_hash) do
+    query =
+      from(contract in ProxyContract,
+        where: contract.proxy_address == ^address_hash
+      )
+
+    query
+    |> Repo.one()
+    |> case do
+      nil -> {:error, :not_found}
+      proxy_contract -> {:ok, proxy_contract.implementation_address}
+    end
+  end
+
   @doc """
   Finds metadata for verification of a contract from verified twins: contracts with the same bytecode
   which were verified previously, returns a single t:SmartContract.t/0
@@ -3163,7 +3177,7 @@ defmodule Explorer.Chain do
     if current_smart_contract do
       current_smart_contract
     else
-      address_verified_twin_contract = Chain.get_address_verified_twin_contract(address_hash).verified_contract
+      address_verified_twin_contract = Explorer.Chain.get_address_verified_twin_contract(address_hash).verified_contract
 
       if address_verified_twin_contract do
         Map.put(address_verified_twin_contract, :address_hash, address_hash)
