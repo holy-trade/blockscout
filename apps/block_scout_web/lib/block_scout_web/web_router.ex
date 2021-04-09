@@ -130,7 +130,7 @@ defmodule BlockScoutWeb.WebRouter do
       if Application.get_env(:explorer, Explorer.ThirdPartyIntegrations.Sourcify)[:enabled] do
         resources(
           "/contract_verifications",
-          AddressContractVerificationController,
+          AddressContractVerificationViaJsonController,
           only: [:new],
           as: :verify_contract
         )
