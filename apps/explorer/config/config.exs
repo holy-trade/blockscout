@@ -220,7 +220,7 @@ config :explorer, Explorer.Chain.Cache.Uncles,
 
 config :explorer, Explorer.ThirdPartyIntegrations.Sourcify,
   server_url: System.get_env("SOURCIFY_SERVER_URL") || "https://sourcify.dev/server",
-  enabled: System.get_env("ENABLE_SOURCIFY_INTEGRATION") == "true",
+  enabled: if(System.get_env("ENABLE_SOURCIFY_INTEGRATION") == "true", do: true, else: false),
   chain_id: System.get_env("CHAIN_ID"),
   repo_url: System.get_env("SOURCIFY_REPO_URL") || "https://repo.sourcify.dev/contracts/full_match/"
 
