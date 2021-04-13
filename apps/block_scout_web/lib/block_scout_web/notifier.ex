@@ -4,11 +4,13 @@ defmodule BlockScoutWeb.Notifier do
   """
 
   alias Absinthe.Subscription
+
   alias BlockScoutWeb.{
     AddressContractVerificationViaFlattenedCodeView,
     AddressContractVerificationViaJsonView,
     Endpoint
   }
+
   alias Explorer.{Chain, ExchangeRates, Market, Repo}
   alias Explorer.Chain.{Address, InternalTransaction, Transaction}
   alias Explorer.Chain.Supply.RSK

@@ -42,7 +42,6 @@ defmodule Explorer.SmartContract.Publisher do
 
       {:error, error, error_message} ->
         {:error, unverified_smart_contract(address_hash, params_with_external_libaries, error, error_message)}
-
     end
   end
 
@@ -59,7 +58,7 @@ defmodule Explorer.SmartContract.Publisher do
       SmartContract.invalid_contract_changeset(
         %SmartContract{address_hash: address_hash},
         attrs,
-        error, 
+        error,
         error_message
       )
 
