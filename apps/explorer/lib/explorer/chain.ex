@@ -993,7 +993,7 @@ defmodule Explorer.Chain do
           if smart_contract do
             address_result
           else
-            address_verified_twin_contract = Explorer.Chain.get_address_verified_twin_contract(hash).verified_contract
+            address_verified_twin_contract = get_address_verified_twin_contract(hash).verified_contract
 
             if address_verified_twin_contract do
               address_verified_twin_contract_updated =
@@ -1312,7 +1312,7 @@ defmodule Explorer.Chain do
           if smart_contract do
             address_result
           else
-            address_verified_twin_contract = Explorer.Chain.get_address_verified_twin_contract(hash).verified_contract
+            address_verified_twin_contract = get_address_verified_twin_contract(hash).verified_contract
 
             if address_verified_twin_contract do
               address_verified_twin_contract_updated =
@@ -3130,7 +3130,7 @@ defmodule Explorer.Chain do
         contract_code = target_address.contract_code
 
         case contract_code do
-          %Explorer.Chain.Data{bytes: contract_code_bytes} ->
+          %Data{bytes: contract_code_bytes} ->
             contract_code_md5 =
               Base.encode16(:crypto.hash(:md5, "\\x" <> Base.encode16(contract_code_bytes, case: :lower)),
                 case: :lower
@@ -3192,7 +3192,7 @@ defmodule Explorer.Chain do
     if current_smart_contract do
       current_smart_contract
     else
-      address_verified_twin_contract = Explorer.Chain.get_address_verified_twin_contract(address_hash).verified_contract
+      address_verified_twin_contract = get_address_verified_twin_contract(address_hash).verified_contract
 
       if address_verified_twin_contract do
         Map.put(address_verified_twin_contract, :address_hash, address_hash)
