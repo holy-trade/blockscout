@@ -43,7 +43,7 @@ defmodule Explorer.ThirdPartyIntegrations.Sourcify do
     http_post_request(verify_url(), multipart_body)
   end
 
-  def http_get_request(url, params) do
+  defp http_get_request(url, params) do
     request = HTTPoison.get(url, [], params: params)
 
     case request do
@@ -70,7 +70,7 @@ defmodule Explorer.ThirdPartyIntegrations.Sourcify do
     end
   end
 
-  def http_post_request(url, body) do
+  defp http_post_request(url, body) do
     request = Tesla.post(url, body)
 
     case request do
