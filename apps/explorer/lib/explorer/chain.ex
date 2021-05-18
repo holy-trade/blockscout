@@ -2923,6 +2923,30 @@ defmodule Explorer.Chain do
     end
   end
 
+  @spec contract_address?(String.t()) :: boolean()
+  def contract_address?(address_hash) do
+    {:ok, binary_hash} = Explorer.Chain.Hash.Address.cast(address_hash)
+
+    query =
+      from(
+        address in Address,
+        where: address.hash == ^binary_hash
+      )
+
+    address = Repo.one(query)
+
+    cond do
+      is_nil(address) ->
+        false
+
+      is_nil(address.contract_code) ->
+        false
+
+      true ->
+        true
+    end
+  end
+
   @doc """
   Fetches contract creation input data.
   """

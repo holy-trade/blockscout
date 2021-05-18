@@ -8,12 +8,12 @@
 defmodule BlockScoutWeb.AddressReadContractController do
   use BlockScoutWeb, :controller
 
+  alias BlockScoutWeb.AddressContractVerificationController
   alias Explorer.{Chain, Market}
   alias Explorer.ExchangeRates.Token
   alias Indexer.Fetcher.CoinBalanceOnDemand
 
   def index(conn, %{"address_id" => address_hash_string}) do
-    BlockScoutWeb.AddressContractVerificationController.check_sourcify(address_hash_string, conn)
     address_options = [
       necessity_by_association: %{
         :contracts_creation_internal_transaction => :optional,
@@ -29,6 +29,8 @@ defmodule BlockScoutWeb.AddressReadContractController do
     with {:ok, address_hash} <- Chain.string_to_address_hash(address_hash_string),
          {:ok, address} <- Chain.find_contract_address(address_hash, address_options, true),
          false <- is_nil(address.smart_contract) do
+      AddressContractVerificationController.check_sourcify(address_hash_string, conn)
+
       render(
         conn,
         "index.html",

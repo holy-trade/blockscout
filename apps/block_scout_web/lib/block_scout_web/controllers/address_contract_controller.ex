@@ -4,14 +4,12 @@ defmodule BlockScoutWeb.AddressContractController do
 
   require Logger
 
-  #  import BlockScoutWeb.AddressController, only: [transaction_and_validation_count: 1]
-
+  alias BlockScoutWeb.AddressContractVerificationController
   alias Explorer.{Chain, Market}
   alias Explorer.ExchangeRates.Token
   alias Indexer.Fetcher.CoinBalanceOnDemand
 
   def index(conn, %{"address_id" => address_hash_string}) do
-    BlockScoutWeb.AddressContractVerificationController.check_sourcify(address_hash_string, conn)
     address_options = [
       necessity_by_association: %{
         :contracts_creation_internal_transaction => :optional,
@@ -27,6 +25,7 @@ defmodule BlockScoutWeb.AddressContractController do
          {:ok, address} <- Chain.find_contract_address(address_hash, address_options, true) do
       Logger.debug("Address Found #{address_hash}")
       Logger.debug("Smart Contract #{address}")
+      AddressContractVerificationController.check_sourcify(address_hash_string, conn)
 
       with {:ok, implementation_address} <- Chain.get_proxied_address(address_hash),
            {:ok, implementation_contract} <- Chain.find_contract_address(implementation_address, address_options, true) do

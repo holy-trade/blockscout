@@ -5,6 +5,7 @@ defmodule BlockScoutWeb.AddressCeloController do
 
   import BlockScoutWeb.AddressController, only: [transaction_and_validation_count: 1]
 
+  alias BlockScoutWeb.AddressContractVerificationController
   alias Explorer.{Chain, Market}
   alias Explorer.ExchangeRates.Token
   alias Indexer.Fetcher.CoinBalanceOnDemand
@@ -12,11 +13,11 @@ defmodule BlockScoutWeb.AddressCeloController do
   alias Explorer.Chain.CeloAccount
 
   def index(conn, %{"address_id" => address_hash_string}) do
-    BlockScoutWeb.AddressContractVerificationController.check_sourcify(address_hash_string, conn)
     with {:ok, address_hash} <- Chain.string_to_address_hash(address_hash_string),
          {:ok, address} <- Chain.hash_to_address(address_hash),
          %CeloAccount{address: _} <- address.celo_account do
       Logger.debug("Parsing Celo Address #{address_hash_string}")
+      AddressContractVerificationController.check_sourcify(address_hash_string, conn)
 
       {transaction_count, validation_count} = transaction_and_validation_count(address_hash)
 

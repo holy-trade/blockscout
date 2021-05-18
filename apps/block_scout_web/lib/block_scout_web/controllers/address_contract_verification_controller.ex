@@ -136,26 +136,22 @@ defmodule BlockScoutWeb.AddressContractVerificationController do
   end
 
   def check_sourcify(address_hash_string, conn) do
-    if not Chain.smart_contract_verified?(address_hash_string) do
-      case Sourcify.check_by_address(address_hash_string) do
-        {:ok, _verified_status} ->
-          case Sourcify.get_metadata(address_hash_string) do
-            {:ok, verification_metadata} ->
-              %{"params_to_publish" => params_to_publish, "abi" => abi, "secondary_sources" => secondary_sources} =
-                parse_params_from_sourcify(address_hash_string, verification_metadata)
+    if not Chain.smart_contract_verified?(address_hash_string) and Chain.contract_address?(address_hash_string) do
+      with {:ok, _verified_status} <- Sourcify.check_by_address(address_hash_string),
+           {:ok, verification_metadata} <- Sourcify.get_metadata(address_hash_string) do
+        %{"params_to_publish" => params_to_publish, "abi" => abi, "secondary_sources" => secondary_sources} =
+          parse_params_from_sourcify(address_hash_string, verification_metadata)
 
-              ContractController.publish(conn, %{
-                "addressHash" => address_hash_string,
-                "params" => params_to_publish,
-                "abi" => abi,
-                "secondarySources" => secondary_sources
-              })
-
-            {:error, _} ->
-              :ok
-          end
-        {:error, _} -> :ok
-    end
+        ContractController.publish(conn, %{
+          "addressHash" => address_hash_string,
+          "params" => params_to_publish,
+          "abi" => abi,
+          "secondarySources" => secondary_sources
+        })
+      else
+        _ ->
+          :ok
+      end
     end
   end
 

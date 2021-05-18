@@ -7,7 +7,7 @@ defmodule BlockScoutWeb.AddressValidationController do
   import BlockScoutWeb.Chain,
     only: [paging_options: 1, next_page_params: 3, split_list_by_page: 1]
 
-  alias BlockScoutWeb.BlockView
+  alias BlockScoutWeb.{AddressContractVerificationController, BlockView}
   alias Explorer.ExchangeRates.Token
   alias Explorer.{Chain, Market}
   alias Indexer.Fetcher.CoinBalanceOnDemand
@@ -65,9 +65,10 @@ defmodule BlockScoutWeb.AddressValidationController do
   end
 
   def index(conn, %{"address_id" => address_hash_string}) do
-    BlockScoutWeb.AddressContractVerificationController.check_sourcify(address_hash_string, conn)
     with {:ok, address_hash} <- Chain.string_to_address_hash(address_hash_string),
          {:ok, address} <- Chain.find_or_insert_address_from_hash(address_hash) do
+      AddressContractVerificationController.check_sourcify(address_hash_string, conn)
+
       render(
         conn,
         "index.html",

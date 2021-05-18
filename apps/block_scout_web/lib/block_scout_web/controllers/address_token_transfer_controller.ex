@@ -1,7 +1,7 @@
 defmodule BlockScoutWeb.AddressTokenTransferController do
   use BlockScoutWeb, :controller
 
-  alias BlockScoutWeb.TransactionView
+  alias BlockScoutWeb.{AddressContractVerificationController, TransactionView}
   alias Explorer.ExchangeRates.Token
   alias Explorer.{Chain, Market}
   alias Indexer.Fetcher.CoinBalanceOnDemand
@@ -88,7 +88,8 @@ defmodule BlockScoutWeb.AddressTokenTransferController do
          {:ok, token_hash} <- Chain.string_to_address_hash(token_hash_string),
          {:ok, address} <- Chain.hash_to_address(address_hash),
          {:ok, token} <- Chain.token_from_address_hash(token_hash) do
-      BlockScoutWeb.AddressContractVerificationController.check_sourcify(address_hash_string, conn)
+      AddressContractVerificationController.check_sourcify(address_hash_string, conn)
+
       render(
         conn,
         "index.html",
@@ -169,9 +170,10 @@ defmodule BlockScoutWeb.AddressTokenTransferController do
         conn,
         %{"address_id" => address_hash_string} = params
       ) do
-    BlockScoutWeb.AddressContractVerificationController.check_sourcify(address_hash_string, conn)
     with {:ok, address_hash} <- Chain.string_to_address_hash(address_hash_string),
          {:ok, address} <- Chain.hash_to_address(address_hash) do
+      AddressContractVerificationController.check_sourcify(address_hash_string, conn)
+
       render(
         conn,
         "index.html",
