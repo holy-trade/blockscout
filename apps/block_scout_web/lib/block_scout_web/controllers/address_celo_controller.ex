@@ -12,7 +12,6 @@ defmodule BlockScoutWeb.AddressCeloController do
   alias Explorer.Chain.CeloAccount
 
   def index(conn, %{"address_id" => address_hash_string}) do
-    BlockScoutWeb.AddressContractVerificationController.check_sourcify(address_hash_string, conn)
     with {:ok, address_hash} <- Chain.string_to_address_hash(address_hash_string),
          {:ok, address} <- Chain.hash_to_address(address_hash),
          %CeloAccount{address: _} <- address.celo_account do

@@ -88,7 +88,6 @@ defmodule BlockScoutWeb.AddressTokenTransferController do
          {:ok, token_hash} <- Chain.string_to_address_hash(token_hash_string),
          {:ok, address} <- Chain.hash_to_address(address_hash),
          {:ok, token} <- Chain.token_from_address_hash(token_hash) do
-      BlockScoutWeb.AddressContractVerificationController.check_sourcify(address_hash_string, conn)
       render(
         conn,
         "index.html",
@@ -169,7 +168,6 @@ defmodule BlockScoutWeb.AddressTokenTransferController do
         conn,
         %{"address_id" => address_hash_string} = params
       ) do
-    BlockScoutWeb.AddressContractVerificationController.check_sourcify(address_hash_string, conn)
     with {:ok, address_hash} <- Chain.string_to_address_hash(address_hash_string),
          {:ok, address} <- Chain.hash_to_address(address_hash) do
       render(

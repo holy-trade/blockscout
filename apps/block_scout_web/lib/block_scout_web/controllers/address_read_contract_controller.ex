@@ -13,7 +13,6 @@ defmodule BlockScoutWeb.AddressReadContractController do
   alias Indexer.Fetcher.CoinBalanceOnDemand
 
   def index(conn, %{"address_id" => address_hash_string}) do
-    BlockScoutWeb.AddressContractVerificationController.check_sourcify(address_hash_string, conn)
     address_options = [
       necessity_by_association: %{
         :contracts_creation_internal_transaction => :optional,

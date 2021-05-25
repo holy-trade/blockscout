@@ -91,7 +91,6 @@ defmodule BlockScoutWeb.AddressTransactionController do
   end
 
   def index(conn, %{"address_id" => address_hash_string} = params) do
-    BlockScoutWeb.AddressContractVerificationController.check_sourcify(address_hash_string, conn)
     with {:ok, address_hash} <- Chain.string_to_address_hash(address_hash_string),
          {:ok, address} <- Chain.hash_to_address(address_hash) do
       render(
