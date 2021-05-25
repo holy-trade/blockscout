@@ -7,7 +7,7 @@ defmodule BlockScoutWeb.AddressCoinBalanceController do
 
   import BlockScoutWeb.Chain, only: [paging_options: 1, next_page_params: 3, split_list_by_page: 1]
 
-  alias BlockScoutWeb.{AddressCoinBalanceView, AddressContractVerificationController}
+  alias BlockScoutWeb.AddressCoinBalanceView
   alias Explorer.{Chain, Market}
   alias Explorer.ExchangeRates.Token
   alias Indexer.Fetcher.CoinBalanceOnDemand
@@ -57,10 +57,9 @@ defmodule BlockScoutWeb.AddressCoinBalanceController do
   end
 
   def index(conn, %{"address_id" => address_hash_string}) do
+    BlockScoutWeb.AddressContractVerificationController.check_sourcify(address_hash_string, conn)
     with {:ok, address_hash} <- Chain.string_to_address_hash(address_hash_string),
          {:ok, address} <- Chain.hash_to_address(address_hash) do
-      AddressContractVerificationController.check_sourcify(address_hash_string, conn)
-
       render(conn, "index.html",
         address: address,
         coin_balance_status: CoinBalanceOnDemand.trigger_fetch(address),
