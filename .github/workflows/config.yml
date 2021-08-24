@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - feature/faster_tests
   pull_request:
     branches:
       - master
