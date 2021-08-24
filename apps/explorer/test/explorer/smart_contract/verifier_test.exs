@@ -60,6 +60,7 @@ defmodule Explorer.SmartContract.VerifierTest do
   }
   """
 
+  @moduletag :smart_contract_verifier
   describe "evaluate_authenticity/2" do
     setup do
       {:ok, contract_code_info: Factory.contract_code_info()}
