@@ -1,6 +1,64 @@
+defmodule Explorer.SmartContract.SolidityCode do
+  defmacro __using__(_) do
+    quote do
+      @code_0_4 """
+      pragma solidity ^0.4.0;
+      contract Incrementer {
+          event Incremented(address indexed sender, uint256 newValue);
+          uint256 public value;
+          address public lastSender;
+          constructor(uint256 initialValue) public {
+              value = initialValue;
+              lastSender = msg.sender;
+          }
+          function inc(uint256 delta) public {
+              value = value + delta;
+              lastSender = msg.sender;
+          }
+      }
+      """
+
+      @code_0_5 """
+      pragma solidity ^0.5.0;
+      contract Incrementer {
+          event Incremented(address indexed sender, uint256 newValue);
+          uint256 public value;
+          address public lastSender;
+          constructor(uint256 initialValue) public {
+              value = initialValue;
+              lastSender = msg.sender;
+          }
+          function inc(uint256 delta) public {
+              value = value + delta;
+              lastSender = msg.sender;
+          }
+      }
+      """
+
+      @code_0_6 """
+      pragma solidity ^0.6.0;
+      contract Incrementer {
+          event Incremented(address indexed sender, uint256 newValue);
+          uint256 public value;
+          address public lastSender;
+          constructor(uint256 initialValue) public {
+              value = initialValue;
+              lastSender = msg.sender;
+          }
+          function inc(uint256 delta) public {
+              value = value + delta;
+              lastSender = msg.sender;
+          }
+      }
+      """
+    end
+  end
+end
+
 defmodule Explorer.SmartContract.VerifierTest do
   use ExUnit.Case, async: true
   use Explorer.DataCase
+  use Explorer.SmartContract.SolidityCode
 
   @moduletag timeout: :infinity
 
@@ -9,56 +67,6 @@ defmodule Explorer.SmartContract.VerifierTest do
   alias Explorer.SmartContract.Verifier
   alias Explorer.Factory
 
-  @code_0_4 """
-  pragma solidity ^0.4.0;
-  contract Incrementer {
-      event Incremented(address indexed sender, uint256 newValue);
-      uint256 public value;
-      address public lastSender;
-      constructor(uint256 initialValue) public {
-          value = initialValue;
-          lastSender = msg.sender;
-      }
-      function inc(uint256 delta) public {
-          value = value + delta;
-          lastSender = msg.sender;
-      }
-  }
-  """
-
-  @code_0_5 """
-  pragma solidity ^0.5.0;
-  contract Incrementer {
-      event Incremented(address indexed sender, uint256 newValue);
-      uint256 public value;
-      address public lastSender;
-      constructor(uint256 initialValue) public {
-          value = initialValue;
-          lastSender = msg.sender;
-      }
-      function inc(uint256 delta) public {
-          value = value + delta;
-          lastSender = msg.sender;
-      }
-  }
-  """
-
-  @code_0_6 """
-  pragma solidity ^0.6.0;
-  contract Incrementer {
-      event Incremented(address indexed sender, uint256 newValue);
-      uint256 public value;
-      address public lastSender;
-      constructor(uint256 initialValue) public {
-          value = initialValue;
-          lastSender = msg.sender;
-      }
-      function inc(uint256 delta) public {
-          value = value + delta;
-          lastSender = msg.sender;
-      }
-  }
-  """
 
   @moduletag :smart_contract_verifier
   describe "evaluate_authenticity/2" do
