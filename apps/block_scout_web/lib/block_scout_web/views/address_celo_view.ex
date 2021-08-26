@@ -27,25 +27,15 @@ defmodule BlockScoutWeb.AddressCeloView do
     pending <> " " <> active
   end
 
-  def compute_active_votes(%{units: nil}) do
-    Decimal.new(0)
-  end
-
-  def compute_active_votes(%{group: %{units: nil}}) do
-    Decimal.new(0)
-  end
-
-  def compute_active_votes(member) do
-    units = member.units.value
-    total_units = member.group.total_units.value
-    total_active = member.group.active_votes.value
-
-    if Decimal.eq?(0, total_units) do
+  def compute_active_votes(%{units: units, group: %{total_units: total, active_votes: votes}}) do
+    if Decimal.eq?(0, total.value) do
       Decimal.new(0)
     else
-      Decimal.div_int(Decimal.mult(units, total_active), total_units)
+      Decimal.div_int(Decimal.mult(units.value, votes.value), total.value)
     end
   end
+
+  def compute_active_votes(_address),  do: Decimal.new(0)
 
   def format_active_votes(member) do
     format_according_to_decimals(compute_active_votes(member), Decimal.new(18))
