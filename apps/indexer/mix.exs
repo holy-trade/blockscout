@@ -37,7 +37,8 @@ defmodule Indexer.MixProject do
     [
       # so that the supervision tree does not start, which would begin indexing, and so that the various fetchers can
       # be started with `ExUnit`'s `start_supervised` for unit testing.
-      test: "test --no-start"
+      test: "test --no-start",
+      itx: "priv/scripts/assemble_requests.ex"
     ]
   end
 

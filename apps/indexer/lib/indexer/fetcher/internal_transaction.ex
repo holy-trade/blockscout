@@ -22,8 +22,8 @@ defmodule Indexer.Fetcher.InternalTransaction do
 
   @behaviour BufferedTask
 
-  @max_batch_size 20
-  @max_concurrency 8
+  @max_batch_size 5
+  @max_concurrency 1
   @defaults [
     flush_interval: :timer.seconds(3),
     poll_interval: :timer.seconds(3),
@@ -192,7 +192,8 @@ defmodule Indexer.Fetcher.InternalTransaction do
     Enum.map(internal_transactions, fn a -> Map.put(a, :block_hash, block_hash) end)
   end
 
-  defp fetch_block_internal_transactions_by_transactions(unique_numbers, json_rpc_named_arguments) do
+  def fetch_block_internal_transactions_by_transactions(unique_numbers, json_rpc_named_arguments) do
+    Logger.error(json_rpc_named_arguments)
     Enum.reduce(unique_numbers, {:ok, []}, fn
       block_number, {:ok, acc_list} ->
         block = Chain.number_to_any_block(block_number)
