@@ -13,7 +13,7 @@
 
 ### Chore
 - [#5053](https://github.com/blockscout/blockscout/pull/5053) - Update ex_keccak lib
-
+- [#4781](https://github.com/blockscout/blockscout/pull/4781) - PGAnalyze index suggestions
 
 ## 4.1.0-beta
 
