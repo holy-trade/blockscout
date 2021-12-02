@@ -53,18 +53,6 @@
             <dt class="col-md-2 text-muted"><%= gettext "Optimization enabled" %></dt>
             <dd class="col-md-4"><%= if target_contract.is_vyper_contract, do: "N/A", else: format_optimization_text(target_contract.optimization) %></dd>
           </dl>
-          <%= if @is_proxy do %>
-            <dl class="row">
-            <dt class="col-md-2 text-muted"><%= gettext "Is a Proxy?" %></dt>
-            <dd class="col-md-4"><%= @is_proxy %></dd>
-            <div class="d-none d-sm-block d-md-none"></br></br></div>
-            <div class="d-block d-sm-none"></br></br></div>
-            <%= if @implementation.smart_contract &&  @implementation.smart_contract.name do %>
-              <dt class="col-md-2 text-muted"><%= gettext "Implementation Name:" %></dt>
-              <dd class="col-md-4"><%= @implementation.smart_contract.name %></dd>
-            <% end %>
-            </dl>
-          <% end %>
           <dl class="row">
             <dt class="col-md-2 text-muted"><%= gettext "Compiler version" %></dt>
             <dd class="col-md-4"><%= target_contract.compiler_version %></dd>

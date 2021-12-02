@@ -25,7 +25,6 @@ defmodule Indexer.Block.Fetcher do
     CeloValidator,
     CeloValidatorGroup,
     CeloValidatorHistory,
-    CeloVoterRewards,
     CeloVoters,
     CoinBalance,
     ContractCode,
@@ -132,7 +131,13 @@ defmodule Indexer.Block.Fetcher do
   defp add_celo_token_balances(celo_token, addresses, acc) do
     Enum.reduce(addresses, acc, fn
       %{fetched_coin_balance_block_number: bn, hash: hash}, acc ->
-        MapSet.put(acc, %{address_hash: hash, token_contract_address_hash: celo_token, block_number: bn})
+        MapSet.put(acc, %{
+          address_hash: hash,
+          token_contract_address_hash: celo_token,
+          block_number: bn,
+          token_type: "ERC-20",
+          token_id: nil
+        })
 
       _, acc ->
         acc
@@ -198,7 +203,7 @@ defmodule Indexer.Block.Fetcher do
           %{
             celo: celo_token,
             cusd: stable_token_usd,
-            creal: stable_token_real,
+            creal: _,
             ceur: _
           }, oracle_address,
           celo_token_enabled} <-
@@ -224,7 +229,6 @@ defmodule Indexer.Block.Fetcher do
            attestations_requested: attestations_requested,
            exchange_rates: exchange_rates,
            account_names: account_names,
-           voter_rewards: celo_voter_rewards,
            wallets: celo_wallets,
            withdrawals: celo_withdrawals
          } = CeloAccounts.parse(logs, oracle_address),
@@ -334,7 +338,6 @@ defmodule Indexer.Block.Fetcher do
       Market.bulk_insert_history(market_history)
 
       async_import_celo_validators(%{celo_validators: %{params: celo_validators}})
-      async_import_celo_voter_rewards(%{celo_voter_rewards: %{params: celo_voter_rewards}})
       async_import_celo_validator_groups(%{celo_validator_groups: %{params: celo_validator_groups}})
       async_import_celo_voters(%{celo_voters: %{params: celo_voters}})
       async_import_celo_validator_history(range)
@@ -498,10 +501,6 @@ defmodule Indexer.Block.Fetcher do
   end
 
   def async_import_celo_validator_groups(_), do: :ok
-
-  def async_import_celo_voter_rewards(%{celo_voter_rewards: accounts}) do
-    CeloVoterRewards.async_fetch(accounts)
-  end
 
   def async_import_celo_voters(%{celo_voters: accounts}) do
     CeloVoters.async_fetch(accounts)

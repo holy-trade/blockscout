@@ -83,6 +83,7 @@ defmodule Indexer.Transform.TokenTransfers do
       to_address_hash: to_hash,
       token_contract_address_hash: gold_token,
       transaction_hash: tx.hash,
+      token_id: nil,
       token_type: "ERC-20"
     }
 
@@ -112,6 +113,7 @@ defmodule Indexer.Transform.TokenTransfers do
       to_address_hash: to_hash,
       token_contract_address_hash: gold_token,
       transaction_hash: tx.transaction_hash,
+      token_id: nil,
       token_type: "ERC-20"
     }
 
@@ -165,6 +167,7 @@ defmodule Indexer.Transform.TokenTransfers do
           to_address_hash: recipient,
           token_contract_address_hash: currency,
           transaction_hash: tx.transaction_hash,
+          token_id: nil,
           token_type: "ERC-20"
         }
 
