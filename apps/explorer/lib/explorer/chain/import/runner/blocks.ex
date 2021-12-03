@@ -360,100 +360,58 @@ defmodule Explorer.Chain.Import.Runner.Blocks do
     end
   end
 
-  # defp delete_address_token_balances(_, [], _), do: {:ok, []}
 
-  # defp delete_address_token_balances(repo, consensus_block_numbers, %{timeout: timeout}) do
-  #   ordered_query =
-  #     from(tb in Address.TokenBalance,
-  #       where: tb.block_number in ^consensus_block_numbers,
-  #       select: map(tb, [:address_hash, :token_contract_address_hash, :token_id, :block_number]),
-  #       # Enforce TokenBalance ShareLocks order (see docs: sharelocks.md)
-  #       order_by: [
-  #         tb.token_contract_address_hash,
-  #         tb.token_id,
-  #         tb.address_hash,
-  #         tb.block_number
-  #       ],
-  #       lock: "FOR UPDATE"
-  #     )
+  def new_celo_pending_operations(repo, changes_list, %{timeout: timeout, timestamps: timestamps}) do
+    if Application.get_env(:explorer, :json_rpc_named_arguments)[:variant] == EthereumJSONRPC.RSK do
+      {:ok, []}
+    else
+      celo_pending_ops =
+        changes_list
+        |> Enum.map(& &1.number)
+        |> MapSet.new()
+        |> MapSet.to_list()
+        |> Enum.filter(&(rem(&1, 17280) == 0))
+        |> Enum.map(&Enum.find(changes_list, fn block -> block.number == &1 end))
+        |> Enum.map(&%{block_hash: &1.hash, fetch_epoch_rewards: true})
 
-  #   query =
-  #     from(tb in Address.TokenBalance,
-  #       select: map(tb, [:address_hash, :token_contract_address_hash, :block_number]),
-  #       inner_join: ordered_address_token_balance in subquery(ordered_query),
-  #       on:
-  #         ordered_address_token_balance.address_hash == tb.address_hash and
-  #           ordered_address_token_balance.token_contract_address_hash ==
-  #             tb.token_contract_address_hash and
-  #           ((is_nil(ordered_address_token_balance.token_id) and is_nil(tb.token_id)) or
-  #              (ordered_address_token_balance.token_id == tb.token_id and
-  #                 not is_nil(ordered_address_token_balance.token_id) and not is_nil(tb.token_id))) and
-  #           ordered_address_token_balance.block_number == tb.block_number
-  #     )
+      Import.insert_changes_list(
+        repo,
+        celo_pending_ops,
+        conflict_target: :block_hash,
+        on_conflict: CeloPendingEpochOperation.default_on_conflict(),
+        for: CeloPendingEpochOperation,
+        returning: true,
+        timeout: timeout,
+        timestamps: timestamps
+      )
+    end
+  end
 
-  #   try do
-  #     {_count, deleted_address_token_balances} = repo.delete_all(query, timeout: timeout)
-
-  #     {:ok, deleted_address_token_balances}
-  #   rescue
-  #     postgrex_error in Postgrex.Error ->
-  #       {:error, %{exception: postgrex_error, block_numbers: consensus_block_numbers}}
-  #   end
-  # end
-
-  # defp delete_address_current_token_balances(_, [], _), do: {:ok, []}
-
-  # defp delete_address_current_token_balances(repo, consensus_block_numbers, %{timeout: timeout}) do
-  #   ordered_query =
-  #     from(ctb in Address.CurrentTokenBalance,
-  #       where: ctb.block_number in ^consensus_block_numbers,
-  #       select: map(ctb, [:address_hash, :token_contract_address_hash, :token_id]),
-  #       # Enforce CurrentTokenBalance ShareLocks order (see docs: sharelocks.md)
-  #       order_by: [
-  #         ctb.token_contract_address_hash,
-  #         ctb.token_id,
-  #         ctb.address_hash
-  #       ],
-  #       lock: "FOR UPDATE"
-  #     )
-
-  #   query =
-  #     from(ctb in Address.CurrentTokenBalance,
-  #       select:
-  #         map(ctb, [
-  #           :address_hash,
-  #           :token_contract_address_hash,
-  #           :token_id,
-  #           # Used to determine if `address_hash` was a holder of `token_contract_address_hash` before
-
-  #           # `address_current_token_balance` is deleted in `update_tokens_holder_count`.
-  #           :value
-  #         ]),
-  #       inner_join: ordered_address_current_token_balance in subquery(ordered_query),
-  #       on:
-  #         ordered_address_current_token_balance.address_hash == ctb.address_hash and
-  #           ordered_address_current_token_balance.token_contract_address_hash == ctb.token_contract_address_hash and
-  #           ((is_nil(ordered_address_current_token_balance.token_id) and is_nil(ctb.token_id)) or
-  #              (ordered_address_current_token_balance.token_id == ctb.token_id and
-  #                 not is_nil(ordered_address_current_token_balance.token_id) and not is_nil(ctb.token_id)))
-  #     )
-
-  #   try do
-  #     {_count, deleted_address_current_token_balances} = repo.delete_all(query, timeout: timeout)
-
-  #     {:ok, deleted_address_current_token_balances}
-  #   rescue
-  #     postgrex_error in Postgrex.Error ->
-  #       {:error, %{exception: postgrex_error, block_numbers: consensus_block_numbers}}
-  #   end
-  # end
-
-  # defp derive_address_current_token_balances(_, [], _), do: {:ok, []}
-
-  # defp derive_address_current_token_balances(
-  #        repo,
-  #        deleted_address_current_token_balances,
-  #        %{timeout: timeout} = options
+  #  defp delete_address_token_balances(_, [], _), do: {:ok, []}
+  #
+  #  defp delete_address_token_balances(repo, consensus_block_numbers, %{timeout: timeout}) do
+  #    ordered_query =
+  #      from(tb in Address.TokenBalance,
+  #        where: tb.block_number in ^consensus_block_numbers,
+  #        select: map(tb, [:address_hash, :token_contract_address_hash, :block_number]),
+  #        # Enforce TokenBalance ShareLocks order (see docs: sharelocks.md)
+  #        order_by: [
+  #          tb.token_contract_address_hash,
+  #          tb.address_hash,
+  #          tb.block_number
+  #        ],
+  #        lock: "FOR UPDATE"
+  #      )
+  #
+  #    query =
+  #      from(tb in Address.TokenBalance,
+  #        select: map(tb, [:address_hash, :token_contract_address_hash, :block_number]),
+  #        inner_join: ordered_address_token_balance in subquery(ordered_query),
+  #        on:
+  #          ordered_address_token_balance.address_hash == tb.address_hash and
+  #            ordered_address_token_balance.token_contract_address_hash ==
+  #              tb.token_contract_address_hash and
+  #            ordered_address_token_balance.block_number == tb.block_number
   #      )
   #      when is_list(deleted_address_current_token_balances) do
   #   final_query = derive_address_current_token_balances_grouped_query(deleted_address_current_token_balances)
