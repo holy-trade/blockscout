@@ -508,7 +508,7 @@ msgid "CELO burned from transactions included in the block (Base fee (per unit o
 msgstr ""
 
 #, elixir-format
-#: lib/block_scout_web/templates/address_token/overview.html.eex:65
+#: lib/block_scout_web/templates/address_token/overview.html.eex:66
 msgid "CRC Worth"
 msgstr ""
 
@@ -2149,7 +2149,7 @@ msgid "Shows the tokens held in the address (includes ERC-20, ERC-721 and ERC-11
 msgstr ""
 
 #, elixir-format
-#: lib/block_scout_web/templates/address_token/overview.html.eex:66
+#: lib/block_scout_web/templates/address_token/overview.html.eex:67
 msgid "Shows the total CRC balance in the address."
 msgstr ""
 
