@@ -3341,3 +3341,11 @@ msgstr ""
 #: lib/block_scout_web/templates/stakes/_stakes_modal_delegators_list.html.eex:18
 msgid "validator"
 msgstr ""
+
+# From templates/transaction/_token_transfer.html.eex
+msgid "cGLD"
+msgstr "CELO"
+
+# From templates/tokens/overview/details.html.eex#
+msgid "Celo Gold"
+msgstr "CELO"

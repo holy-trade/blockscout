@@ -49,6 +49,7 @@ defmodule Explorer.Chain.TokenTransfer do
   * `:log_index` - Index of the corresponding `t:Explorer.Chain.Log.t/0` in the transaction.
   * `:amounts` - Tokens transferred amounts in case of batched transfer in ERC-1155
   * `:token_ids` - IDs of the tokens (applicable to ERC-1155 tokens)
+  * `:comment` - Comment
   """
   @type t :: %TokenTransfer{
           amount: Decimal.t() | nil,
