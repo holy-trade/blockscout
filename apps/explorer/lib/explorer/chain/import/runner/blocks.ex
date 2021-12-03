@@ -360,7 +360,6 @@ defmodule Explorer.Chain.Import.Runner.Blocks do
     end
   end
 
-
   def new_celo_pending_operations(repo, changes_list, %{timeout: timeout, timestamps: timestamps}) do
     if Application.get_env(:explorer, :json_rpc_named_arguments)[:variant] == EthereumJSONRPC.RSK do
       {:ok, []}
@@ -497,32 +496,6 @@ defmodule Explorer.Chain.Import.Runner.Blocks do
   #     end
   #   end)
   # end
-
-  def new_celo_pending_operations(repo, changes_list, %{timeout: timeout, timestamps: timestamps}) do
-    if Application.get_env(:explorer, :json_rpc_named_arguments)[:variant] == EthereumJSONRPC.RSK do
-      {:ok, []}
-    else
-      celo_pending_ops =
-        changes_list
-        |> Enum.map(& &1.number)
-        |> MapSet.new()
-        |> MapSet.to_list()
-        |> Enum.filter(&(rem(&1, 17280) == 0))
-        |> Enum.map(&Enum.find(changes_list, fn block -> block.number == &1 end))
-        |> Enum.map(&%{block_hash: &1.hash, fetch_epoch_rewards: true})
-
-      Import.insert_changes_list(
-        repo,
-        celo_pending_ops,
-        conflict_target: :block_hash,
-        on_conflict: CeloPendingEpochOperation.default_on_conflict(),
-        for: CeloPendingEpochOperation,
-        returning: true,
-        timeout: timeout,
-        timestamps: timestamps
-      )
-    end
-  end
 
   # `block_rewards` are linked to `blocks.hash`, but fetched by `blocks.number`, so when a block with the same number is
   # inserted, the old block rewards need to be deleted, so that the old and new rewards aren't combined.
