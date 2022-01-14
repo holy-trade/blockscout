@@ -71,9 +71,9 @@ function getPageName (path) {
     case path === '/graphiql':
       return 'graphiql'
     case path === '/api-docs':
-      return 'apiDocs'       
+      return 'apiDocs'
     case path === '/eth-rpc-api-docs':
-      return 'ethRpcApiDocs'      
+      return 'ethRpcApiDocs'
     case path.includes('/blocks') && path.includes('/transactions'):
       return 'blockTransactions'
     case path.includes('/block') && path.includes('/transactions'):
