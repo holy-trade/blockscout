@@ -60,7 +60,7 @@ function getPageName (path) {
       return 'home'
     case path === '/txs':
       return 'validatedTransactions'
-    case path === '/pending_transactions':
+    case path === '/pending-transactions':
       return 'pendingTransactions'
     case path === '/blocks':
       return 'blockHistory'
@@ -82,13 +82,13 @@ function getPageName (path) {
       return 'blockSigners'
     case path.includes('/address') && path.includes('/transactions'):
       return 'addressDetails'
-    case path.includes('/address') && path.includes('/token_transfers'):
+    case path.includes('/address') && (path.includes('/token_transfers') || path.includes('/token-transfers')):
       return 'addressTokenTransfers'
     case path.includes('/address') && path.includes('/tokens'):
       return 'addressTokens'
-    case path.includes('/address') && path.includes('/internal_transactions'):
+    case path.includes('/address') && (path.includes('/internal_transactions') || path.includes('/internal-transactions')):
       return 'addressInternalTransactions'
-    case path.includes('/address') && path.includes('/coin_balances'):
+    case path.includes('/address') && (path.includes('/coin_balances') || path.includes('/coin-balances')):
       return 'addressCoinHistory'
     case path.includes('/address') && path.includes('/logs'):
       return 'addressLogs'
@@ -101,21 +101,21 @@ function getPageName (path) {
     // TODO: Add rest of contract pages
     case path.includes('/address') && path.includes('/contracts'):
       return 'contractAddressCode'
-    case path.includes('/address') && path.includes('/read_contract'):
+    case path.includes('/address') && (path.includes('/read_contract') || path.includes('/read-contract')):
       return 'readContract'
-    case path.includes('/tx') && path.includes('/internal_transactions'):
+    case path.includes('/tx') && (path.includes('/internal_transactions') || path.includes('/internal-transactions')):
       return 'transactionInternalTransaction'
     case path.includes('/tx') && path.includes('/logs'):
       return 'transactionLogs'
     case path.includes('/tx') && path.includes('/raw-trace'):
       return 'transactionRawTrace'
-    case path.includes('/tx') && path.includes('/token_transfers'):
+    case path.includes('/tx') && (path.includes('/token_transfers') || path.includes('/token-transfers')):
       return 'transactionTokenTransfers'
-    case path.includes('/tokens') && path.includes('/token_transfers'):
+    case path.includes('/tokens') && (path.includes('/token_transfers') || path.includes('/token-transfers')):
       return 'tokenDetails'
     case path.includes('/csv-export') && path.includes('address') && path.includes('transactions'):
       return 'csvExportAddressTransactions'
-    case path.includes('/csv-export') && path.includes('address') && path.includes('token_transfers'):
+    case path.includes('/csv-export') && path.includes('address') && (path.includes('token_transfers') || path.includes('token-transfers')):
       return 'csvExportAddressTokenTransfers'
     default:
       return path
