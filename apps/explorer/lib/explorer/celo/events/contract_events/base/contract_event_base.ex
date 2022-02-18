@@ -41,6 +41,10 @@ defmodule Explorer.Celo.ContractEvents.Base do
       def query do
         from(c in CeloContractEvent, where: c.name == ^@name)
       end
+
+      def query(query) do
+        from(c in query, or_where: c.name == ^@name)
+      end
     end
   end
 
