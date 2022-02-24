@@ -4,7 +4,7 @@ defmodule Explorer.Celo.Events.EpochRewardsDistributedToVotersEventTest do
   alias Explorer.Chain.{Address, Log}
   alias Explorer.Celo.ContractEvents.EventTransformer
   alias Explorer.Celo.ContractEvents.Election.{EpochRewardsDistributedToVotersEvent, ValidatorGroupVoteActivatedEvent}
-
+  alias Explorer.Celo.ContractEvents.EventMap
   import Explorer.Factory
 
   describe "Test conversion" do
@@ -101,6 +101,56 @@ defmodule Explorer.Celo.Events.EpochRewardsDistributedToVotersEventTest do
                group_address_1_hash,
                group_address_2_hash
              ]
+    end
+  end
+
+  describe "query_by_group/2" do
+    test "should only return relevant events" do
+      insert_events = fn (n_events, group_address) ->
+        %Address{hash: contract_address_hash} = insert(:address)
+
+        1..n_events
+        |> Enum.each( fn i ->
+            group_address = case group_address do
+              nil ->
+                %Address{hash: group_address} = insert(:address)
+                group_address
+              n -> n
+            end
+
+            block = insert(:block, number: 190_080)
+
+            insert(:contract_event, %{
+              event: %EpochRewardsDistributedToVotersEvent{
+                block_hash: block.hash,
+                log_index: i,
+                contract_address_hash: contract_address_hash,
+                group: group_address,
+                value: 420
+              }
+            })
+          end)
+        end
+
+      insert_events.(50, nil)
+
+      %Address{hash: test_address} = insert(:address)
+      insert_events.(10, test_address)
+
+      all_events = EpochRewardsDistributedToVotersEvent.query() |> EventMap.query_all()
+
+      assert length(all_events) == 60, "should be 60 events in total"
+
+      group_events = EpochRewardsDistributedToVotersEvent.query()
+                     |> EpochRewardsDistributedToVotersEvent.query_by_group(test_address)
+                     |> EventMap.query_all()
+
+      assert length(group_events) == 10, "should only be 10 events that match params.group = test_address"
+
+      group_events
+      |> Enum.each(fn e ->
+        assert e.group == test_address, "Event group should match the address provided to the query_by_group call"
+      end)
     end
   end
 end

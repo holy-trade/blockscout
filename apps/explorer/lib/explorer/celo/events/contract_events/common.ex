@@ -68,8 +68,12 @@ defmodule Explorer.Celo.ContractEvents.Common do
 
   @doc "Convert postgres hex string to Explorer.Chain.Hash.Address instance"
   def cast_address("\\x" <> hash) do
-    {:ok, address} = Address.cast("0x" <> hash)
-    address
+    case Address.cast("0x" <> hash) do
+      {:ok, address}  -> address
+      n ->
+        require IEx; IEx.pry
+    end
+
   end
 
   @doc "Alias for cast_address/1"
