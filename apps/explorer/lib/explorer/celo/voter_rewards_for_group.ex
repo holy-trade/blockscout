@@ -67,7 +67,8 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
               date: block.timestamp,
               epoch_reward: json_extract_path(event.params, ["value"]),
               event: event.name,
-              previous_block_group_votes: votes.previous_block_active_votes
+              previous_block_group_votes: votes.previous_block_active_votes,
+              previous_block_group_votes_units: votes.previous_block_active_votes_units
             },
             where: block.number >= ^voter_activated_earliest_block.block_number,
             where: event.name == ^epoch_rewards_distributed_to_voters,
@@ -90,8 +91,13 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
               voter_votes = voter_votes + amount_activated_or_revoked
 
               {:ok, previous_block_group_votes_decimal} = Wei.dump(curr.previous_block_group_votes)
+              {:ok, previous_block_group_vote_units_decimal} = Wei.dump(curr.previous_block_group_vote_units)
 
-              current_voter_votes = div(curr.epoch_reward * voter_votes, Decimal.to_integer(previous_block_group_votes_decimal))
+              current_voter_votes = div(
+                votes_to_units(curr.epoch_reward, previous_block_group_vote_units_decimal, previous_block_group_votes_decimal) *
+                votes_to_units(voter_votes, previous_block_group_vote_units_decimal, previous_block_group_votes_decimal),
+                Decimal.to_integer(previous_block_group_vote_units_decimal)
+              )
 
               {
                 %{
@@ -110,6 +116,9 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
     end
   end
 
+  def votes_to_units(value, totalUnits, totalVotes) do
+    value * totalUnits / totalVotes
+  end
   def amount_activated_or_revoked_last_day(voter_activated_or_revoked, block_number) do
     voter_activated_or_revoked
     |> Enum.filter(&(&1.block_number < block_number && &1.block_number >= block_number - 17280))
