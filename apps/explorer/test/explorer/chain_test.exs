@@ -9,12 +9,11 @@ defmodule Explorer.ChainTest do
   import Explorer.Factory
   import Mox
 
-  alias Explorer.{Chain, Factory, PagingOptions, Repo}
+  alias Explorer.{Chain, Factory, PagingOptions, Repo, SetupVoterRewardsTest}
 
   alias Explorer.Chain.{
     Address,
     Block,
-    CeloPendingEpochOperation,
     CeloUnlocked,
     Data,
     DecompiledSmartContract,
@@ -31,6 +30,12 @@ defmodule Explorer.ChainTest do
 
   alias Explorer.Chain
   alias Explorer.Chain.InternalTransaction.Type
+
+  alias Explorer.Celo.ContractEvents.Election.{
+    EpochRewardsDistributedToVotersEvent,
+    ValidatorGroupActiveVoteRevokedEvent,
+    ValidatorGroupVoteActivatedEvent
+  }
 
   alias Explorer.Chain.Supply.ProofOfAuthority
   alias Explorer.Counters.AddressesWithBalanceCounter
@@ -5966,17 +5971,6 @@ defmodule Explorer.ChainTest do
     end
   end
 
-  describe "delete_celo_pending_epoch_operation/1" do
-    test "deletes an epoch block hash that was indexed from celo_pending_epoch_operations" do
-      block = insert(:block)
-      insert(:celo_pending_epoch_operations, block_hash: block.hash, fetch_epoch_rewards: true)
-
-      Chain.delete_celo_pending_epoch_operation(block.hash)
-
-      assert Repo.one!(select(CeloPendingEpochOperation, fragment("COUNT(*)"))) == 0
-    end
-  end
-
   describe "pending_withdrawals_for_account/1" do
     test "fetches individual pending withdrawals when passed an account address" do
       available = DateTime.utc_now()
@@ -5997,6 +5991,31 @@ defmodule Explorer.ChainTest do
     test "https://github.com/celo-org/data-services/issues/136" do
       # Would create invalid ts_search statement and crash at the db layer
       Chain.list_top_tokens("tsSLAueP<esi:include%20src=\"http://bxss.me/rpb.png\"/>")
+    end
+  end
+
+  describe "get_last_fetched_counter/1" do
+    test "it returns zero if doesn't exist in db" do
+      value = Chain.get_last_fetched_counter("total_transaction_count")
+      assert 0 == Decimal.to_integer(value)
+    end
+
+    test "it returns previous value" do
+      params = %{
+        counter_type: "total_transaction_count",
+        value: 100
+      }
+
+      Chain.upsert_last_fetched_counter(params)
+
+      assert 100 == Decimal.to_integer(Chain.get_last_fetched_counter("total_transaction_count"))
+    end
+  end
+
+  describe "prepare_search_term/1" do
+    test "returns empty string in tuple when given nil as search term" do
+      term = Chain.prepare_search_term(nil)
+      assert {:some, ""} == term, "nil value should result in empty string search term"
     end
   end
 end
