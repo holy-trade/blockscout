@@ -58,7 +58,7 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
         query =
           from(event in CeloContractEvent,
             inner_join: votes in CeloValidatorGroupVotes,
-            on: event.block_hash == votes.block_hash,
+            on: fragment("cast( ? ->> 'group' AS bytea)", event.params) == votes.group_hash and event.block_hash == votes.block_hash,
             inner_join: block in Block,
             on: event.block_hash == block.hash,
             select: %{
@@ -76,32 +76,32 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
 
         epoch_rewards_distributed_events_after_voter_first_activated_votes =
           query
-          |> CeloContractEvent.query_by_group_param(group_address_hash)
+          |> EpochRewardsDistributedToVotersEvent.query_by_group(group_address_hash)
           |> Repo.all()
 
         {rewards, total} =
           Enum.map_reduce(
             epoch_rewards_distributed_events_after_voter_first_activated_votes,
             0,
-            fn curr, amount ->
+            fn curr, voter_votes ->
               amount_activated_or_revoked =
                 amount_activated_or_revoked_last_day(voter_activated_or_revoked, curr.block_number)
 
-              amount = amount + amount_activated_or_revoked
+              voter_votes = voter_votes + amount_activated_or_revoked
 
               {:ok, previous_block_group_votes_decimal} = Wei.dump(curr.previous_block_group_votes)
 
-              current_amount = div(curr.epoch_reward * amount, Decimal.to_integer(previous_block_group_votes_decimal))
+              current_voter_votes = div(curr.epoch_reward * voter_votes, Decimal.to_integer(previous_block_group_votes_decimal))
 
               {
                 %{
-                  amount: current_amount,
+                  amount: current_voter_votes,
                   block_hash: curr.block_hash,
                   block_number: curr.block_number,
                   date: curr.date,
                   epoch_number: Util.epoch_by_block_number(curr.block_number)
                 },
-                amount + current_amount
+                voter_votes + current_voter_votes
               }
             end
           )

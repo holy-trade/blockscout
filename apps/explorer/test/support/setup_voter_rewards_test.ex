@@ -12,7 +12,6 @@ import Explorer.Factory
 
 defmodule Explorer.SetupVoterRewardsTest do
   def setup_for_group do
-    validator_group_active_vote_revoked = ValidatorGroupActiveVoteRevokedEvent.name()
     %Address{hash: voter_address_1_hash} = insert(:address)
     %Address{hash: voter_address_2_hash} = insert(:address)
     %Address{hash: group_address_hash} = insert(:address)
@@ -211,6 +210,24 @@ defmodule Explorer.SetupVoterRewardsTest do
         contract_address_hash: contract_address_hash,
         group: group_address_hash,
         value: 80
+      }
+    })
+
+    log_30 = insert(:log, block: block_9, index: 111)
+
+    insert(:celo_validator_group_votes, %{
+      block_hash: block_9.hash,
+      group_hash: voter_address_1_hash,
+      previous_block_active_votes: 6666
+    })
+
+    insert(:contract_event, %{
+      event: %EpochRewardsDistributedToVotersEvent{
+        block_hash: block_9.hash,
+        log_index: log_30.index,
+        contract_address_hash: contract_address_hash,
+        group: voter_address_1_hash,
+        value: 66666
       }
     })
 
