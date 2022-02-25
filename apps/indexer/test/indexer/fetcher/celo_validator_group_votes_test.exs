@@ -122,14 +122,20 @@ defmodule Indexer.Fetcher.CeloValidatorGroupVotesTest do
       %Address{hash: group_1_hash} = insert(:address)
       %Address{hash: group_2_hash} = insert(:address)
 
-      insert(:celo_pending_epoch_operations, block_hash: block_1_hash)
-      insert(:celo_pending_epoch_operations, block_hash: block_2_hash, fetch_epoch_rewards: false)
+      insert(:celo_pending_epoch_operations, block_hash: block_1_hash, fetch_epoch_rewards: false)
+      insert(:celo_pending_epoch_operations, block_hash: block_2_hash)
 
       votes = [
         %{
           block_hash: block_1_hash,
           block_number: block_1_number,
           group_hash: group_1_hash,
+          previous_block_active_votes: 3_309_559_737_470_045_295_626_384
+        },
+        %{
+          block_hash: block_1_hash,
+          block_number: block_1_number,
+          group_hash: group_2_hash,
           previous_block_active_votes: 3_309_559_737_470_045_295_626_384
         },
         %{
@@ -143,7 +149,7 @@ defmodule Indexer.Fetcher.CeloValidatorGroupVotesTest do
       CeloValidatorGroupVotesFetcher.import_items(votes)
 
       assert count(CeloPendingEpochOperation) == 1
-      assert count(CeloValidatorGroupVotes) == 2
+      assert count(CeloValidatorGroupVotes) == 3
     end
   end
 

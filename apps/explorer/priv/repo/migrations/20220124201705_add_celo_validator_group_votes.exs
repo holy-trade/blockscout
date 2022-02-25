@@ -4,8 +4,7 @@ defmodule Explorer.Repo.Migrations.AddCeloValidatorGroupVotes do
   def change do
     create table(:celo_validator_group_votes, primary_key: false) do
       add(:block_hash, references(:blocks, column: :hash, type: :bytea, on_delete: :delete_all),
-        null: false,
-        primary_key: true
+        null: false
       )
 
       add(:group_hash, references(:addresses, column: :hash, type: :bytea), null: false)

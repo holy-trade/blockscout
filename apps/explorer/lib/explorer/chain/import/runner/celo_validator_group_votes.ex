@@ -46,6 +46,7 @@ defmodule Explorer.Chain.Import.Runner.CeloValidatorGroupVotes do
     |> Multi.run(:delete_celo_pending, fn _, _ ->
       changes =
         changes_list
+        |> Enum.uniq_by(fn %{block_hash: a} -> a end)
         |> Enum.each(fn reward ->
           CeloPendingEpochOperation.falsify_or_delete_celo_pending_epoch_operation(
             reward.block_hash,
@@ -68,8 +69,7 @@ defmodule Explorer.Chain.Import.Runner.CeloValidatorGroupVotes do
     # Enforce ShareLocks order (see docs: sharelocks.md)
     uniq_changes_list =
       changes_list
-      |> Enum.sort_by(&{&1.block_hash})
-      |> Enum.dedup_by(&{&1.block_hash})
+      |> Enum.uniq_by(fn %{block_hash: a, group_hash: b} -> {a, b} end)
 
     {:ok, _} =
       Import.insert_changes_list(
