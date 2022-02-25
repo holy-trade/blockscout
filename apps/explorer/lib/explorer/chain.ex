@@ -47,7 +47,6 @@ defmodule Explorer.Chain do
     CeloAccount,
     CeloClaims,
     CeloParams,
-    CeloPendingEpochOperation,
     CeloSigners,
     CeloUnlocked,
     CeloValidator,
@@ -754,6 +753,18 @@ defmodule Explorer.Chain do
     |> Enum.into(%{})
   end
 
+  def timestamp_by_block_hash(block_hash) do
+    query =
+      from(
+        block in Block,
+        where: block.hash == ^block_hash and block.consensus == true,
+        select: block.timestamp
+      )
+
+    query
+    |> Repo.one()
+  end
+
   @doc """
   Finds all `t:Explorer.Chain.Transaction.t/0`s in the `t:Explorer.Chain.Block.t/0`.
 
@@ -1249,7 +1260,9 @@ defmodule Explorer.Chain do
     end
   end
 
-  defp prepare_search_term(string) do
+  def prepare_search_term(nil), do: {:some, ""}
+
+  def prepare_search_term(string) do
     case Regex.scan(~r/[a-zA-Z0-9]+/, string) do
       [_ | _] = words ->
         term_final =
@@ -2833,6 +2846,23 @@ defmodule Explorer.Chain do
     Repo.stream_reduce(query, initial, reducer)
   end
 
+  @spec stream_blocks_with_unfetched_validator_group_data(
+          initial :: accumulator,
+          reducer :: (entry :: term(), accumulator -> accumulator)
+        ) :: {:ok, accumulator}
+        when accumulator: term()
+  def stream_blocks_with_unfetched_validator_group_data(initial, reducer) when is_function(reducer, 2) do
+    query =
+      from(
+        b in Block,
+        join: celo_pending_ops in assoc(b, :celo_pending_epoch_operations),
+        where: celo_pending_ops.fetch_validator_group_data,
+        select: %{block_number: b.number, block_hash: b.hash}
+      )
+
+    Repo.stream_reduce(query, initial, reducer)
+  end
+
   def remove_nonconsensus_blocks_from_pending_ops(block_hashes) do
     query =
       from(
@@ -3118,10 +3148,7 @@ defmodule Explorer.Chain do
         select: last_fetched_counter.value
       )
 
-    case Repo.one(query) do
-      {:ok, result} -> result
-      _ -> Decimal.new(0)
-    end
+    Repo.one(query) || Decimal.new(0)
   end
 
   defp block_status({number, timestamp}) do
@@ -3607,10 +3634,19 @@ defmodule Explorer.Chain do
     cached_value = TransactionCount.get_count()
 
     if is_nil(cached_value) do
-      %Postgrex.Result{rows: [[rows]]} =
-        SQL.query!(Repo, "SELECT reltuples::BIGINT AS estimate FROM pg_class WHERE relname='transactions'")
+      count = Chain.get_last_fetched_counter("total_transaction_count")
 
-      rows
+      case count do
+        nil ->
+          %Postgrex.Result{rows: [[rows]]} =
+            SQL.query!(Repo, "SELECT reltuples::BIGINT AS estimate FROM pg_class WHERE relname='transactions'")
+
+          rows
+
+        _ ->
+          count
+          |> Decimal.to_integer()
+      end
     else
       cached_value
     end
@@ -7858,27 +7894,6 @@ defmodule Explorer.Chain do
 
     query
     |> Repo.one()
-  end
-
-  @spec delete_celo_pending_epoch_operation(Hash.Full.t()) :: CeloPendingEpochOperation.t()
-  def delete_celo_pending_epoch_operation(block_hash) do
-    celo_pending_operation = Repo.get(CeloPendingEpochOperation, block_hash)
-    Repo.delete(celo_pending_operation)
-  end
-
-  def import_epoch_rewards_and_delete_pending_celo_epoch_operations(import_params, success) do
-    Multi.new()
-    |> Multi.run(:import_rewards, fn _, _ ->
-      result = Chain.import(import_params)
-      {:ok, result}
-    end)
-    |> Multi.run(:delete_celo_pending, fn _, _ ->
-      success
-      |> Enum.each(fn reward -> Chain.delete_celo_pending_epoch_operation(reward.block_hash) end)
-
-      {:ok, success}
-    end)
-    |> Explorer.Repo.transaction()
   end
 
   def pending_withdrawals_for_account(account_address) do
