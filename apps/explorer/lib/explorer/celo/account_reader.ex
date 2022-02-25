@@ -158,21 +158,24 @@ defmodule Explorer.Celo.AccountReader do
 
   def validator_group_votes(%{block_number: bn, block_hash: block_hash}, group_hash) do
     data =
-      [{:election, "getActiveVotesForGroup", [to_string(group_hash)], bn - 1}]
-      |> call_methods()
+      call_methods([
+        {:election, "getActiveVotesForGroup", [to_string(group_hash)], bn - 1},
+        {:election, "getActiveVoteUnitsForGroup", [to_string(group_hash)], bn - 1}
+      ])
 
-    case data["getActiveVotesForGroup"] do
-      {:ok, [active_votes]} ->
-        {:ok,
-         %{
-           block_hash: block_hash,
-           block_number: bn,
-           group_hash: group_hash,
-           previous_block_active_votes: active_votes
-         }}
-
-      error ->
-        error
+    with {:ok, [active_votes]} <- data["getActiveVotesForGroup"],
+         {:ok, [active_vote_units]} <- data["getActiveVoteUnitsForGroup"] do
+      {:ok,
+        %{
+          block_hash: block_hash,
+          block_number: bn,
+          group_hash: group_hash,
+          previous_block_active_votes: active_votes,
+          previous_block_active_votes_units: active_vote_units
+          }}
+    else
+      _ ->
+        :error
     end
   end
 

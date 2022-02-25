@@ -7,22 +7,25 @@ defmodule Explorer.Chain.CeloValidatorGroupVotes do
 
   alias Explorer.Chain.{Block, CeloValidatorGroup, Hash, Wei}
 
-  @required_attrs ~w(block_hash group_hash previous_block_active_votes)a
+  @required_attrs ~w(block_hash group_hash previous_block_active_votes previous_block_active_votes_units)a
 
   @typedoc """
    * `block_hash` - the hash of the epoch block.
    * `group_hash` - the hash of the group.
    * `previous_block_active_votes` - number of activated votes for this group one block before the epoch block.
+   * `previous_block_active_votes_units` - number of activated votes units for this group one block before the epoch block.
   """
   @type t :: %__MODULE__{
           block_hash: Hash.Full.t(),
           group_hash: Hash.Full.t(),
-          previous_block_active_votes: Wei.t()
+          previous_block_active_votes: Wei.t(),
+          previous_block_active_votes_units: Wei.t()
         }
 
   @primary_key false
   schema "celo_validator_group_votes" do
     field(:previous_block_active_votes, Wei)
+    field(:previous_block_active_votes_units, Wei)
 
     timestamps()
 

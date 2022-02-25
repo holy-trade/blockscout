@@ -9,6 +9,7 @@ defmodule Explorer.Repo.Migrations.AddCeloValidatorGroupVotes do
 
       add(:group_hash, references(:addresses, column: :hash, type: :bytea), null: false)
       add(:previous_block_active_votes, :numeric, precision: 100)
+      add(:previous_block_active_votes_units, :numeric, precision: 100)
 
       timestamps(null: false, type: :utc_datetime_usec)
     end
