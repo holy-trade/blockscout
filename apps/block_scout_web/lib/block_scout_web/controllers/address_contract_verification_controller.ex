@@ -52,7 +52,7 @@ defmodule BlockScoutWeb.AddressContractVerificationController do
         %{}
       )
 
-    render(conn, "_new.html",
+    render(conn, "new.html",
       changeset: changeset,
       address_hash: ""
       # , licenses: [
