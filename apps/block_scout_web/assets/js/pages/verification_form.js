@@ -229,6 +229,10 @@ if ($contractVerificationPage.length) {
     })
   })
 } else if ($contractVerificationChooseTypePage.length) {
+  $('#smart_contract_address_hash').on('change', function () {
+    $('#message_address_verified').removeAttr('hidden')
+  })
+
   $('.verify-via-flattened-code').on('click', function () {
     if ($(this).prop('checked')) {
       $('#verify_via_flattened_code_button').show()

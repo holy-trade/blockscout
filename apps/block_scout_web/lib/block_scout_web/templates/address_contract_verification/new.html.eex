@@ -19,13 +19,23 @@
             <div class="center-column">
               <%= text_input f, :address_hash, id: "smart_contract_address_hash", class: "form-control border-rounded", "aria-describedby": "contract-address-help-block", readonly: false%>
               <%= error_tag f, :address_hash, id: "contract-address-help-block", class: "text-danger form-error" %>
+              <%= if Chain.smart_contract_verified?(@address_hash) do %>
+                <div id="message_address_verified" class="alert alert-success" hidden=true>
+                    <%=
+                      link(
+                        gettext("Contract verified"),
+                        class: "btn-no-border",
+                        to: address_contract_path(@conn, :index, @address_hash)
+                        )
+                    %>
+                  </div>
+                </div>
+              <% end %>
             </div>
             <div class="smart-contract-form-group-tooltip">The 0x address supplied on contract creation.</div>
           </div>
           </div>
-
-                          <div class="smart-contract-form-group">
-
+           <div class="smart-contract-form-group">
           <div class="smart-contract-form-group-inner-wrapper">
             <%= label f, "Verify" %>
             <div class="center-column">
@@ -54,7 +64,12 @@
             </div>
               
         </div>
-        <input type="submit" value="Next" class="btn-full-primary mr-2" data-button-loading="animation"> 
+        <%= if Chain.smart_contract_verified?(@address_hash) do %>
+          <input type="submit" value="Next" class="btn-full-primary mr-2" data-button-loading="animation" disabled=true > 
+        <% else %>
+          <input type="submit" value="Next" class="btn-full-primary mr-2" data-button-loading="animation"> 
+        <% end %>
+
       <% end %>
     </div>
     <script defer data-cfasync="false" src="<%= static_path(@conn, "/js/verification-form.js") %>"></script>
