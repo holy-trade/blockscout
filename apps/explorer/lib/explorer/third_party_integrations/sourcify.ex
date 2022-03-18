@@ -45,13 +45,15 @@ defmodule Explorer.ThirdPartyIntegrations.Sourcify do
         end
       end)
 
+    missing_files = get_missing_file_sources(files)
+
     case http_post_request(verify_url(), multipart_body) do
       {:ok, response} ->
         {:ok, response}
 
       {:error, error} ->
         if String.starts_with?(error["error"], "Resource missing") do
-          {:error, %{"error" => "Resources missing: " <> Enum.join(get_missing_file_sources(files), ", ")}}
+          {:error, %{"error" => "Resources missing: " <> Enum.join(missing_files, ", ")}}
         else
           {:error, error}
         end
@@ -59,25 +61,34 @@ defmodule Explorer.ThirdPartyIntegrations.Sourcify do
   end
 
   # sobelow_skip ["Traversal"]
-  defp get_missing_file_sources(files) do
-    Enum.map(files, fn file ->
-      if String.ends_with?(file.filename, ".json") do
-        {:ok, body} = File.read(file.path)
-        {:ok, json} = Jason.decode(body)
+  def get_missing_file_sources(files) do
+    # List of files from the json definition
+    list_files =
+      Enum.map(files, fn file ->
+        if String.ends_with?(file.filename, ".json") do
+          {:ok, body} = File.read(file.path)
+          {:ok, json} = Jason.decode(body)
 
-        meatada =
-          json
-          |> Map.get("metadata")
+          meatada =
+            json
+            |> Map.get("metadata")
 
-        {:ok, me} = Jason.decode(meatada)
+          {:ok, me} = Jason.decode(meatada)
 
-        me
-        |> Map.get("sources")
-        |> Map.keys()
-      else
-        nil
-      end
-    end)
+          me
+          |> Map.get("sources")
+          |> Map.keys()
+        else
+          nil
+        end
+      end)
+
+    r = Enum.reject(List.flatten(list_files), &is_nil/1)
+
+    # List of files from the sources minus the already provided
+    Enum.map(r, fn f ->
+      List.last(String.split(f, "/"))
+    end) -- Enum.map(files, fn f -> f.filename end)
   end
 
   def http_get_request(url, params) do

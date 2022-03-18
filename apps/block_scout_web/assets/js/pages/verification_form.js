@@ -145,6 +145,7 @@ if ($contractVerificationPage.length) {
         parallelUploads: 100,
         uploadMultiple: true,
         addRemoveLinks: true,
+        maxFilesize: 10,
         params: { address_hash: $('#smart_contract_address_hash').val() },
         init: function () {
           this.on('addedfile', function (_file) {
@@ -220,7 +221,8 @@ if ($contractVerificationPage.length) {
       }
     })
 
-    $('#verify-via-json-submit').on('click', function () {
+    $('#verify-via-json-submit').on('click', function (event) {
+      event.preventDefault()
       if (dropzone.files.length > 0) {
         dropzone.processQueue()
       } else {
@@ -229,8 +231,28 @@ if ($contractVerificationPage.length) {
     })
   })
 } else if ($contractVerificationChooseTypePage.length) {
-  $('#smart_contract_address_hash').on('change', function () {
-    $('#message_address_verified').removeAttr('hidden')
+  $('#smart_contract_address_hash').on('change load input ready', function () {
+    const address = ($('#smart_contract_address_hash').val())
+    $.get(`/api/?module=contract&action=getsourcecode&address=${address}`).done(
+      response => {
+        if (response.status === '0') {
+          $('#message-address-verified').attr('hidden', 'true')
+          $('#message-link').removeAttr('href')
+          $('#data-button').removeAttr('disabled')
+        } else if (response.result[0].ABI !== undefined && response.result[0].ABI !== 'Contract source code not verified') {
+          $('#message-address-verified').removeAttr('hidden')
+          $('#message-link').attr('href', `/address/${address}`)
+          $('#data-button').attr('disabled', 'true')
+        } else {
+          $('#message-address-verified').attr('hidden', 'true')
+          $('#message-link').removeAttr('href')
+          $('#data-button').removeAttr('disabled')
+        }
+      }).fail(response => {
+      $('#message-address-verified').attr('hidden', 'true')
+      $('#message-link').removeAttr('href')
+      $('#data-button').removeAttr('disabled')
+    })
   })
 
   $('.verify-via-flattened-code').on('click', function () {
