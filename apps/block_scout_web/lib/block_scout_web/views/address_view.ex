@@ -32,6 +32,7 @@ defmodule BlockScoutWeb.AddressView do
     "coin-balances",
     "contracts",
     "decompiled-contracts",
+    "epoch-transactions",
     "internal-transactions",
     "token-transfers",
     "read-contract",
@@ -415,6 +416,7 @@ defmodule BlockScoutWeb.AddressView do
   defp tab_name(["validations"]), do: gettext("Blocks Validated")
   defp tab_name(["logs"]), do: gettext("Logs")
   defp tab_name(["celo"]), do: "Celo Info"
+  defp tab_name(["epoch-transactions"]), do: "Epoch Transactions"
   defp tab_name(["signed"]), do: "Downtime"
 
   def short_hash(%Address{hash: hash}) do
