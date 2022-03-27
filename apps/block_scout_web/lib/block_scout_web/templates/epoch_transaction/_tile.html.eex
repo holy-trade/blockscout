@@ -1,7 +1,7 @@
 <div class="tile tile-type-epoch-transaction fade-in" data-test="epoch_transaction"
-     data-key="<%= @epoch_transaction.block_hash %>_<%= @epoch_transaction.group %>"
+     data-key="<%= @epoch_transaction.block_hash %>_<%= if @current_address.celo_account.account_type == "group", do: @epoch_transaction.validator, else: @epoch_transaction.group %>"
      data-epoch-transaction-block-hash="<%= @epoch_transaction.block_hash %>"
-     data-epoch-transaction-group="<%= @epoch_transaction.group %>">
+     data-epoch-transaction-group="<%= if @current_address.celo_account.account_type == "group", do: @epoch_transaction.validator, else: @epoch_transaction.group %>">
   <div class="row tile-body">
     <!-- Color Block -->
     <div class="tile-transaction-type-block col-md-2 d-flex flex-row flex-md-column">
@@ -11,6 +11,9 @@
         <% end %>
         <%= if @current_address.celo_account.account_type == "validator" do%>
           <%= gettext("Validator Rewards") %>
+        <% end %>
+        <%= if @current_address.celo_account.account_type == "group" do%>
+          <%= gettext("Validator Group Rewards") %>
         <% end %>
       </span>
       <span class="tile-status-label ml-2 ml-md-0" data-epoch-transaction-type="Success">Success</span>
@@ -39,6 +42,16 @@
       <span class="d-flex flex-md-row flex-column mt-3 mt-md-0">
         <span class="tile-title">
           <%= gettext "Validator Group:" %> <%= @epoch_transaction.group_name %>
+        </span>
+      </span>
+      <% end %>
+      <%= if @current_address.celo_account.account_type == "group" do%>
+      <span class="bs-label reward font-weight-bold">
+        <%= gettext "Rewards: " %> <%= %Wei{value: Decimal.new(@epoch_transaction.amount)} |> Wei.to(:ether) |> then(&Decimal.round(&1, 2)) %> <%= gettext "cUSD" %>
+      </span>
+      <span class="d-flex flex-md-row flex-column mt-3 mt-md-0">
+        <span class="tile-title">
+          <%= gettext "Validator:" %> <%= @epoch_transaction.validator_name %>
         </span>
       </span>
       <% end %>
