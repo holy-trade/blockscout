@@ -6,7 +6,7 @@ defmodule Explorer.Celo.ValidatorGroupRewardsTest do
 
   describe "calculate/3" do
     test "returns all rewards for a validator group" do
-      {validator_address_1_hash, group_address_1_hash, block_2_hash, block_3_hash} =
+      {validator_address_1_hash, validator_1_name, group_address_1_hash, _group_1_name, block_2_hash, block_3_hash} =
         SetupValidatorAndGroupRewardsTest.setup()
 
       rewards =
@@ -29,7 +29,8 @@ defmodule Explorer.Celo.ValidatorGroupRewardsTest do
                      block_number: 10_730_880,
                      block_hash: block_2_hash,
                      epoch_number: 621,
-                     validator: validator_address_1_hash
+                     validator: validator_address_1_hash,
+                     validator_name: validator_1_name
                    },
                    %{
                      amount: 400_000,
@@ -37,7 +38,8 @@ defmodule Explorer.Celo.ValidatorGroupRewardsTest do
                      block_number: 10_748_160,
                      block_hash: block_3_hash,
                      epoch_number: 622,
-                     validator: validator_address_1_hash
+                     validator: validator_address_1_hash,
+                     validator_name: validator_1_name
                    }
                  ]
                }
@@ -46,7 +48,8 @@ defmodule Explorer.Celo.ValidatorGroupRewardsTest do
 
   describe "calculate_for_multiple_accounts/3" do
     test "returns all rewards for the validator group the list" do
-      {validator_address_1_hash, validator_address_2_hash, group_address_1_hash, group_address_2_hash, block_1_hash,
+      {validator_address_1_hash, validator_address_2_hash, validator_1_name, validator_2_name, group_address_1_hash,
+       group_address_2_hash, _group_1_name, _group_2_name, block_1_hash,
        block_2_hash} = SetupValidatorAndGroupRewardsTest.setup_for_multiple_accounts()
 
       rewards =
@@ -69,7 +72,8 @@ defmodule Explorer.Celo.ValidatorGroupRewardsTest do
                      block_hash: block_1_hash,
                      epoch_number: 621,
                      group: group_address_1_hash,
-                     validator: validator_address_1_hash
+                     validator: validator_address_1_hash,
+                     validator_name: validator_1_name
                    },
                    %{
                      amount: 500_000,
@@ -78,7 +82,8 @@ defmodule Explorer.Celo.ValidatorGroupRewardsTest do
                      block_hash: block_2_hash,
                      epoch_number: 622,
                      group: group_address_2_hash,
-                     validator: validator_address_2_hash
+                     validator: validator_address_2_hash,
+                     validator_name: validator_2_name
                    },
                    %{
                      amount: 400_000,
@@ -87,7 +92,8 @@ defmodule Explorer.Celo.ValidatorGroupRewardsTest do
                      block_hash: block_2_hash,
                      epoch_number: 622,
                      group: group_address_1_hash,
-                     validator: validator_address_1_hash
+                     validator: validator_address_1_hash,
+                     validator_name: validator_1_name
                    }
                  ]
                }
