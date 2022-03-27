@@ -10,6 +10,7 @@
 - [#5034](https://github.com/blockscout/blockscout/pull/5034) - Fix broken functions input at transation page
 - [#5025](https://github.com/blockscout/blockscout/pull/5025) - Add standard input JSON files validation
 - [#5051](https://github.com/blockscout/blockscout/pull/5051) - Fix 500 response when ABI method was parsed as nil
+- [#5374](https://github.com/blockscout/blockscout/pull/5374) - Return all ERC-1155's token instances in tokenList api endpoint
 
 ### Chore
 - [#4761](https://github.com/blockscout/blockscout/pull/4761) - ERC-1155 support
