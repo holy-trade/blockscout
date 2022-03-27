@@ -6,12 +6,18 @@
     <!-- Color Block -->
     <div class="tile-transaction-type-block col-md-2 d-flex flex-row flex-md-column">
       <span class="tile-label">
-        <%= gettext("Epoch Transaction") %>
+        <%= if @current_address.celo_account.account_type == "normal" do%>
+          <%= gettext("Voting Rewards") %>
+        <% end %>
+        <%= if @current_address.celo_account.account_type == "validator" do%>
+          <%= gettext("Validator Rewards") %>
+        <% end %>
       </span>
       <span class="tile-status-label ml-2 ml-md-0" data-epoch-transaction-type="Success">Success</span>
     </div>
     <!-- Content -->
     <div class="col-md-7 col-lg-8 d-flex flex-column pr-2 pr-sm-2 pr-md-0">
+      <%= if @current_address.celo_account.account_type == "normal" do%>
       <span class="bs-label reward font-weight-bold">
         <%= gettext "Rewards: " %> <%= %Wei{value: Decimal.new(@epoch_transaction.amount)} |> Wei.to(:ether) %> <%= gettext "CELO" %>
       </span>
@@ -25,6 +31,17 @@
           <%= gettext "Validator Group:" %> <%= @epoch_transaction.group_name %>
         </span>
       </span>
+      <% end %>
+      <%= if @current_address.celo_account.account_type == "validator" do%>
+      <span class="bs-label reward font-weight-bold">
+        <%= gettext "Rewards: " %> <%= %Wei{value: Decimal.new(@epoch_transaction.amount)} |> Wei.to(:ether) |> then(&Decimal.round(&1, 2)) %> <%= gettext "cUSD" %>
+      </span>
+      <span class="d-flex flex-md-row flex-column mt-3 mt-md-0">
+        <span class="tile-title">
+          <%= gettext "Validator Group:" %> <%= @epoch_transaction.group_name %>
+        </span>
+      </span>
+      <% end %>
     </div>
     <!-- Block info -->
     <div class="col-md-3 col-lg-2 d-flex flex-row flex-md-column flex-nowrap justify-content-center text-md-right mt-3 mt-md-0">

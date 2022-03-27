@@ -17,9 +17,9 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
 
   def index(conn, %{"address_id" => address_hash_string, "type" => "JSON"} = params) do
     with {:ok, address_hash} <- Chain.string_to_address_hash(address_hash_string),
-         {:ok, address} <- Chain.hash_to_address(address_hash, [], false),
+         {:ok, address} <- Chain.hash_to_address(address_hash),
          {:ok, false} <- AccessHelpers.restricted_access?(address_hash_string, params) do
-      epoch_transactions_object = VoterRewards.calculate(address_hash, nil, nil)
+      epoch_transactions_object = calculate_based_on_account_type(address)
       epoch_transactions_plus_one = epoch_transactions_object.rewards
       {epoch_transactions, next_page} = split_list_by_page(epoch_transactions_plus_one)
 
@@ -60,7 +60,12 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
          {:ok, address} <- Chain.hash_to_address(address_hash),
          {:ok, false} <- AccessHelpers.restricted_access?(address_hash_string, params) do
       epoch_transactions = calculate_based_on_account_type(address)
-      current_active_votes = get_current_active_votes(epoch_transactions.rewards)
+      current_active_votes =
+        if address.celo_account.account_type == "normal" do
+          get_current_active_votes(epoch_transactions.rewards)
+        else
+          nil
+        end
 
       render(
         conn,

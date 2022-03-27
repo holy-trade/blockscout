@@ -184,7 +184,7 @@
               <% end %>
             </dd>
           </dl>
-          <%= if assigns[:epoch_transactions] do %>
+          <%= if assigns[:current_active_votes] && assigns[:current_active_votes] != nil do %>
           <!-- Locked/Activated Balance -->
           <dl class="row">
             <dt class="col-sm-4 col-md-4 col-lg-3 text-muted">
@@ -196,15 +196,22 @@
               <%= %Wei{value: Decimal.new(@current_active_votes)} |> Wei.to(:ether) %> <%= gettext "CELO" %>
             </dd>
           </dl>
+          <% end %>
+          <%= if assigns[:epoch_transactions] do %>
           <!-- Rewards -->
           <dl class="row">
             <dt class="col-sm-4 col-md-4 col-lg-3 text-muted">
               <%= render BlockScoutWeb.CommonComponentsView, "_i_tooltip_2.html",
                 text: gettext("Block number in which the address was updated.") %>
-              <%= gettext("Lifetime Voting Rewards") %>
+              <%= if @address.celo_account.account_type == "normal" do%>
+                <%= gettext("Lifetime Voting Rewards") %>
+              <% end %>
+              <%= if @address.celo_account.account_type == "validator" || @address.celo_account.account_type == "group" do%>
+                <%= gettext("Lifetime Validating Rewards") %>
+              <% end %>
             </dt>
             <dd class="col-sm-8 col-md-8 col-lg-9">
-              <%= %Wei{value: Decimal.new(@epoch_transactions.total_reward_celo)} |> Wei.to(:ether) %> <%= gettext "CELO" %>
+              <%= %Wei{value: Decimal.new(@epoch_transactions.total_reward_celo)} |> Wei.to(:ether) |> then(&Decimal.round(&1, 2)) %> <%= gettext "CELO" %>
             </dd>
           </dl>
           <% end %>
