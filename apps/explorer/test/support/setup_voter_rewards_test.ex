@@ -6,7 +6,7 @@ defmodule Explorer.SetupVoterRewardsTest do
     ValidatorGroupVoteActivatedEvent
   }
 
-  alias Explorer.Chain.{Address, Block, Hash}
+  alias Explorer.Chain.{Address, Block, CeloAccount, Hash}
 
   import Explorer.Factory
 
@@ -14,6 +14,8 @@ defmodule Explorer.SetupVoterRewardsTest do
     %Address{hash: voter_hash} = insert(:address)
     %Address{hash: group_hash} = insert(:address)
     %Explorer.Chain.CeloCoreContract{address_hash: contract_address_hash} = insert(:core_contract)
+    %CeloAccount{name: group_name} = insert(:celo_account, address: group_hash, name: "Bison Trails")
+    %Address{hash: contract_address_hash} = insert(:address)
 
     block_1_number = 619 * 17_280 - 1
     block_1 = insert(:block, number: block_1_number, timestamp: ~U[2022-01-01 17:42:38.162804Z])
@@ -122,6 +124,7 @@ defmodule Explorer.SetupVoterRewardsTest do
     {
       voter_hash,
       group_hash,
+      group_name,
       block_2_hash,
       block_3_hash,
       block_5_hash,
@@ -156,6 +159,8 @@ defmodule Explorer.SetupVoterRewardsTest do
         }
       )
 
+    %CeloAccount{name: group_1_name} = insert(:celo_account, address: group_1_hash, name: "Bison Trails")
+
     %Address{hash: group_2_hash} =
       insert(:address,
         hash: %Hash{
@@ -163,6 +168,8 @@ defmodule Explorer.SetupVoterRewardsTest do
           bytes: <<1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2>>
         }
       )
+
+    %CeloAccount{name: group_2_name} = insert(:celo_account, address: group_2_hash, name: "keyko.io")
 
     block_1 = insert(:block, number: 10_692_863, timestamp: ~U[2022-01-01 13:08:43.162804Z])
     log_1 = insert(:log, block: block_1)
@@ -209,7 +216,7 @@ defmodule Explorer.SetupVoterRewardsTest do
       }
     })
 
-    {voter_1_hash, group_1_hash, group_2_hash}
+    {voter_1_hash, group_1_hash, group_2_hash, group_1_name, group_2_name}
   end
 
   def setup_for_multiple_accounts do
@@ -239,6 +246,8 @@ defmodule Explorer.SetupVoterRewardsTest do
         }
       )
 
+    %CeloAccount{name: group_1_name} = insert(:celo_account, address: group_1_hash, name: "Bison Trails")
+
     %Address{hash: group_2_hash} =
       insert(:address,
         hash: %Hash{
@@ -246,6 +255,8 @@ defmodule Explorer.SetupVoterRewardsTest do
           bytes: <<1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2>>
         }
       )
+
+    %CeloAccount{name: group_2_name} = insert(:celo_account, address: group_2_hash, name: "keyko.io")
 
     block_1 = insert(:block, number: 10_692_863, timestamp: ~U[2022-01-01 13:08:43.162804Z])
     log_1 = insert(:log, block: block_1)
@@ -292,6 +303,6 @@ defmodule Explorer.SetupVoterRewardsTest do
       }
     })
 
-    {voter_1_hash, voter_2_hash, group_1_hash, group_2_hash}
+    {voter_1_hash, voter_2_hash, group_1_hash, group_2_hash, group_1_name, group_2_name}
   end
 end

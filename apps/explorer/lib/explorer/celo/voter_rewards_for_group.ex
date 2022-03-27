@@ -9,7 +9,7 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
     ]
 
   alias Explorer.Celo.{ContractEvents, Util}
-  alias Explorer.Chain.{Block, CeloContractEvent, CeloVoterVotes, Wei}
+  alias Explorer.Chain.{Block, CeloAccount, CeloContractEvent, CeloVoterVotes, Wei}
   alias Explorer.Repo
 
   alias ContractEvents.Election
@@ -25,10 +25,13 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
   def calculate(voter_address_hash, group_address_hash, to_date \\ DateTime.utc_now()) do
     query =
       from(event in CeloContractEvent,
+        inner_join: account in CeloAccount,
+        on: account.address == fragment("cast(?->>'group' AS bytea)", event.params),
         select: %{
-          block_number: event.block_number,
           amount_activated_or_revoked: json_extract_path(event.params, ["value"]),
-          event: event.topic
+          block_number: event.block_number,
+          event: event.topic,
+          group_name: account.name
         },
         order_by: [asc: event.block_number],
         where:
@@ -48,6 +51,8 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
 
       voter_activated_or_revoked ->
         [voter_activated_earliest_block | _] = voter_activated_or_revoked
+
+        %{group_name: group_name} = voter_activated_earliest_block
 
         query =
           from(votes in CeloVoterVotes,
@@ -89,13 +94,14 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
                 block_hash: current_epoch_votes.block_hash,
                 block_number: current_epoch_votes.block_number,
                 date: current_epoch_votes.date,
-                epoch_number: Util.epoch_by_block_number(current_epoch_votes.block_number)
+                epoch_number: Util.epoch_by_block_number(current_epoch_votes.block_number),
+                votes: current_epoch_votes.votes
               },
               {epoch_reward + rewards_sum, current_votes_integer}
             }
           end)
 
-        %{rewards: rewards, total: rewards_sum, group: group_address_hash}
+        %{rewards: rewards, total: rewards_sum, group: group_address_hash, group_name: group_name}
     end
   end
 
