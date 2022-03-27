@@ -1,6 +1,6 @@
 defmodule Explorer.SetupValidatorAndGroupRewardsTest do
   alias Explorer.Celo.ContractEvents.Validators.ValidatorEpochPaymentDistributedEvent
-  alias Explorer.Chain.{Address, Block}
+  alias Explorer.Chain.{Address, Block, CeloAccount}
 
   import Explorer.Factory
 
@@ -10,6 +10,11 @@ defmodule Explorer.SetupValidatorAndGroupRewardsTest do
     %Address{hash: group_address_1_hash} = insert(:address)
     %Address{hash: group_address_2_hash} = insert(:address)
     %Explorer.Chain.CeloCoreContract{address_hash: contract_address_hash} = insert(:core_contract)
+
+    %CeloAccount{name: validator_1_name} =
+      insert(:celo_account, address: validator_address_1_hash, name: " Bison Trails 1")
+
+    %CeloAccount{name: group_1_name} = insert(:celo_account, address: group_address_1_hash, name: "Bison Trails")
 
     block_1 = insert(:block, number: 10_696_320, timestamp: ~U[2022-01-01 17:42:43.162804Z])
 
@@ -87,7 +92,7 @@ defmodule Explorer.SetupValidatorAndGroupRewardsTest do
       }
     })
 
-    {validator_address_1_hash, group_address_1_hash, block_2_hash, block_3_hash}
+    {validator_address_1_hash, validator_1_name, group_address_1_hash, group_1_name, block_2_hash, block_3_hash}
   end
 
   def setup_for_multiple_accounts do
@@ -96,6 +101,13 @@ defmodule Explorer.SetupValidatorAndGroupRewardsTest do
     %Address{hash: group_address_1_hash} = insert(:address)
     %Address{hash: group_address_2_hash} = insert(:address)
     %Explorer.Chain.CeloCoreContract{address_hash: contract_address_hash} = insert(:core_contract)
+    %CeloAccount{name: group_1_name} = insert(:celo_account, address: group_address_1_hash, name: "Bison Trails")
+
+    %CeloAccount{name: validator_1_name} =
+      insert(:celo_account, address: validator_address_1_hash, name: "Bison Trails 1")
+
+    %CeloAccount{name: group_2_name} = insert(:celo_account, address: group_address_2_hash, name: "keyko.io")
+    %CeloAccount{name: validator_2_name} = insert(:celo_account, address: validator_address_2_hash, name: "Keyko-1")
 
     %Block{hash: block_1_hash} =
       block_1 = insert(:block, number: 10_730_880, timestamp: ~U[2022-01-03 17:42:43.162804Z])
@@ -144,7 +156,7 @@ defmodule Explorer.SetupValidatorAndGroupRewardsTest do
       }
     })
 
-    {validator_address_1_hash, validator_address_2_hash, group_address_1_hash, group_address_2_hash, block_1_hash,
-     block_2_hash}
+    {validator_address_1_hash, validator_address_2_hash, validator_1_name, validator_2_name, group_address_1_hash,
+     group_address_2_hash, group_1_name, group_2_name, block_1_hash, block_2_hash}
   end
 end

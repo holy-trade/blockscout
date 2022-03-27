@@ -9,7 +9,7 @@ defmodule Explorer.Celo.Util do
 
   require Logger
   alias Explorer.Celo.{AbiHandler, AddressCache, ContractEvents}
-  alias Explorer.Chain.{Block, CeloContractEvent}
+  alias Explorer.Chain.{Block, CeloAccount, CeloContractEvent}
   alias Explorer.Repo
   alias Explorer.SmartContract.Reader
 
@@ -161,11 +161,27 @@ defmodule Explorer.Celo.Util do
           query
           |> CeloContractEvent.query_by_validator_param(address_hash)
           |> Repo.all()
+          |> Enum.map(fn x ->
+            group_hash = Common.ca(x.group)
+
+            group_name =
+              Repo.one(from(account in CeloAccount, where: account.address == ^group_hash, select: account.name))
+
+            Map.put(x, :group_name, group_name)
+          end)
 
         fetch_for_validator_or_group == "group" ->
           query
           |> CeloContractEvent.query_by_group_param(address_hash)
           |> Repo.all()
+          |> Enum.map(fn x ->
+            validator_hash = Common.ca(x.validator)
+
+            validator_name =
+              Repo.one(from(account in CeloAccount, where: account.address == ^validator_hash, select: account.name))
+
+            Map.put(x, :validator_name, validator_name)
+          end)
       end
 
     activated_votes_for_group
