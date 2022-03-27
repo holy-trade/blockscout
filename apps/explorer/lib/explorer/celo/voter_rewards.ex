@@ -58,8 +58,12 @@ defmodule Explorer.Celo.VoterRewards do
 
     structured_rewards_for_given_period =
       rewards_for_each_group
-      |> Enum.map(fn %{group: group, rewards: rewards} ->
-        Enum.map(rewards, &Map.put(&1, :group, group))
+      |> Enum.map(fn
+        %{group: group, group_name: group_name, rewards: rewards} ->
+          Enum.map(rewards, &Map.merge(&1, %{group: group, group_name: group_name}))
+
+        %{group: group, rewards: rewards} ->
+          Enum.map(rewards, &Map.put(&1, :group, group))
       end)
       |> List.flatten()
       |> Enum.filter(fn x -> DateTime.compare(x.date, from_date) != :lt end)

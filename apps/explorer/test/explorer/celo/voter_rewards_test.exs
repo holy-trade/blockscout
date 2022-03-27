@@ -6,7 +6,8 @@ defmodule Explorer.Celo.VoterRewardsTest do
 
   describe "calculate/3" do
     test "returns all rewards for a voter" do
-      {voter_1_hash, group_1_hash, group_2_hash} = SetupVoterRewardsTest.setup_for_all_groups()
+      {voter_1_hash, group_1_hash, group_2_hash, group_1_name, group_2_name} =
+        SetupVoterRewardsTest.setup_for_all_groups()
 
       rewards =
         VoterRewards.calculate(
@@ -33,7 +34,8 @@ defmodule Explorer.Celo.VoterRewardsTest do
                            3>>
                      },
                      epoch_number: 621,
-                     group: group_1_hash
+                     group: group_1_hash,
+                     group_name: group_1_name
                    },
                    %{
                      amount: 31,
@@ -46,7 +48,8 @@ defmodule Explorer.Celo.VoterRewardsTest do
                            4>>
                      },
                      epoch_number: 622,
-                     group: group_1_hash
+                     group: group_1_hash,
+                     group_name: group_1_name
                    },
                    %{
                      amount: 77,
@@ -59,7 +62,8 @@ defmodule Explorer.Celo.VoterRewardsTest do
                            5>>
                      },
                      epoch_number: 623,
-                     group: group_1_hash
+                     group: group_1_hash,
+                     group_name: group_1_name
                    },
                    %{
                      amount: 39,
@@ -72,7 +76,8 @@ defmodule Explorer.Celo.VoterRewardsTest do
                            4>>
                      },
                      epoch_number: 622,
-                     group: group_2_hash
+                     group: group_2_hash,
+                     group_name: group_2_name
                    },
                    %{
                      amount: 78,
@@ -85,7 +90,8 @@ defmodule Explorer.Celo.VoterRewardsTest do
                            5>>
                      },
                      epoch_number: 623,
-                     group: group_2_hash
+                     group: group_2_hash,
+                     group_name: group_2_name
                    }
                  ]
                }
@@ -94,7 +100,8 @@ defmodule Explorer.Celo.VoterRewardsTest do
 
   describe "calculate_multiple_accounts/3" do
     test "when all input voters have rewards" do
-      {voter_1_hash, voter_2_hash, group_1_hash, group_2_hash} = SetupVoterRewardsTest.setup_for_multiple_accounts()
+      {voter_1_hash, voter_2_hash, group_1_hash, group_2_hash, group_1_name, group_2_name} =
+        SetupVoterRewardsTest.setup_for_multiple_accounts()
 
       rewards =
         VoterRewards.calculate_multiple_accounts(
@@ -121,7 +128,8 @@ defmodule Explorer.Celo.VoterRewardsTest do
                            3>>
                      },
                      epoch_number: 621,
-                     group: group_1_hash
+                     group: group_1_hash,
+                     group_name: group_1_name
                    },
                    %{
                      account: voter_1_hash,
@@ -135,7 +143,8 @@ defmodule Explorer.Celo.VoterRewardsTest do
                            4>>
                      },
                      epoch_number: 622,
-                     group: group_1_hash
+                     group: group_1_hash,
+                     group_name: group_1_name
                    },
                    %{
                      account: voter_1_hash,
@@ -149,7 +158,8 @@ defmodule Explorer.Celo.VoterRewardsTest do
                            4>>
                      },
                      epoch_number: 622,
-                     group: group_2_hash
+                     group: group_2_hash,
+                     group_name: group_2_name
                    },
                    %{
                      account: voter_2_hash,
@@ -163,7 +173,8 @@ defmodule Explorer.Celo.VoterRewardsTest do
                            5>>
                      },
                      epoch_number: 623,
-                     group: group_1_hash
+                     group: group_1_hash,
+                     group_name: group_1_name
                    },
                    %{
                      account: voter_1_hash,
@@ -177,7 +188,8 @@ defmodule Explorer.Celo.VoterRewardsTest do
                            5>>
                      },
                      epoch_number: 623,
-                     group: group_1_hash
+                     group: group_1_hash,
+                     group_name: group_1_name
                    },
                    %{
                      account: voter_1_hash,
@@ -191,14 +203,16 @@ defmodule Explorer.Celo.VoterRewardsTest do
                            5>>
                      },
                      epoch_number: 623,
-                     group: group_2_hash
+                     group: group_2_hash,
+                     group_name: group_2_name
                    }
                  ]
                }
     end
 
     test "when not all input voters have rewards" do
-      {voter_1_hash, voter_2_hash, group_1_hash, group_2_hash} = SetupVoterRewardsTest.setup_for_multiple_accounts()
+      {voter_1_hash, voter_2_hash, group_1_hash, group_2_hash, group_1_name, group_2_name} =
+        SetupVoterRewardsTest.setup_for_multiple_accounts()
 
       rewards =
         VoterRewards.calculate_multiple_accounts(
@@ -225,7 +239,8 @@ defmodule Explorer.Celo.VoterRewardsTest do
                            3>>
                      },
                      epoch_number: 621,
-                     group: group_1_hash
+                     group: group_1_hash,
+                     group_name: group_1_name
                    },
                    %{
                      account: voter_1_hash,
@@ -239,7 +254,8 @@ defmodule Explorer.Celo.VoterRewardsTest do
                            4>>
                      },
                      epoch_number: 622,
-                     group: group_1_hash
+                     group: group_1_hash,
+                     group_name: group_1_name
                    },
                    %{
                      account: voter_1_hash,
@@ -253,7 +269,8 @@ defmodule Explorer.Celo.VoterRewardsTest do
                            4>>
                      },
                      epoch_number: 622,
-                     group: group_2_hash
+                     group: group_2_hash,
+                     group_name: group_2_name
                    },
                    %{
                      account: voter_2_hash,
@@ -267,7 +284,8 @@ defmodule Explorer.Celo.VoterRewardsTest do
                            5>>
                      },
                      epoch_number: 623,
-                     group: group_1_hash
+                     group: group_1_hash,
+                     group_name: group_1_name
                    },
                    %{
                      account: voter_1_hash,
@@ -281,7 +299,8 @@ defmodule Explorer.Celo.VoterRewardsTest do
                            5>>
                      },
                      epoch_number: 623,
-                     group: group_1_hash
+                     group: group_1_hash,
+                     group_name: group_1_name
                    },
                    %{
                      account: voter_1_hash,
@@ -295,7 +314,8 @@ defmodule Explorer.Celo.VoterRewardsTest do
                            5>>
                      },
                      epoch_number: 623,
-                     group: group_2_hash
+                     group: group_2_hash,
+                     group_name: group_2_name
                    }
                  ]
                }

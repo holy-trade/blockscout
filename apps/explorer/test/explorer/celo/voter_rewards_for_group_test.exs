@@ -10,6 +10,7 @@ defmodule Explorer.Celo.VoterRewardsForGroupTest do
       {
         voter_hash,
         group_hash,
+        group_name,
         block_2_hash,
         block_3_hash,
         block_5_hash,
@@ -21,6 +22,7 @@ defmodule Explorer.Celo.VoterRewardsForGroupTest do
       assert rewards ==
                %{
                  group: group_hash,
+                 group_name: group_name,
                  total: 175,
                  rewards: [
                    %{
@@ -28,28 +30,32 @@ defmodule Explorer.Celo.VoterRewardsForGroupTest do
                      block_hash: block_2_hash,
                      block_number: 10_696_320,
                      date: ~U[2022-01-01 17:42:43.162804Z],
-                     epoch_number: 619
+                     epoch_number: 619,
+                     votes: %Wei{value: Decimal.new(730)}
                    },
                    %{
                      amount: 20,
                      block_hash: block_3_hash,
                      block_number: 10_713_600,
                      date: ~U[2022-01-02 17:42:43.162804Z],
-                     epoch_number: 620
+                     epoch_number: 620,
+                     votes: %Wei{value: Decimal.new(750)}
                    },
                    %{
                      amount: 75,
                      block_hash: block_5_hash,
                      block_number: 10_730_880,
                      date: ~U[2022-01-03 17:42:43.162804Z],
-                     epoch_number: 621
+                     epoch_number: 621,
+                     votes: %Wei{value: Decimal.new(1075)}
                    },
                    %{
                      amount: 0,
                      block_hash: block_7_hash,
                      block_number: 10_748_160,
                      date: ~U[2022-01-04 17:42:43.162804Z],
-                     epoch_number: 622
+                     epoch_number: 622,
+                     votes: %Wei{value: Decimal.new(0)}
                    }
                  ]
                }

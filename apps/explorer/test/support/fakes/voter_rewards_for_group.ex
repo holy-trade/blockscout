@@ -48,6 +48,7 @@ defmodule Explorer.Fakes.VoterRewardsForGroup do
              voter_address_hash == @voter_address_1_hash do
     %{
       group: group_address_hash,
+      group_name: "Bison Trails",
       total: 350,
       rewards: [
         %{
@@ -94,6 +95,7 @@ defmodule Explorer.Fakes.VoterRewardsForGroup do
              voter_address_hash == @voter_address_2_hash do
     %{
       group: group_address_hash,
+      group_name: "Bison Trails",
       total: 175,
       rewards: [
         %{
@@ -112,6 +114,7 @@ defmodule Explorer.Fakes.VoterRewardsForGroup do
              voter_address_hash == @voter_address_2_hash do
     %{
       group: group_address_hash,
+      group_name: "Bison Trails",
       total: 175,
       rewards: [
         %{
@@ -128,6 +131,7 @@ defmodule Explorer.Fakes.VoterRewardsForGroup do
   def calculate(_voter_address_hash, group_address_hash, _to_date) when group_address_hash == @group_address_2_hash do
     %{
       group: group_address_hash,
+      group_name: "keyko.io",
       total: 175,
       rewards: [
         %{
