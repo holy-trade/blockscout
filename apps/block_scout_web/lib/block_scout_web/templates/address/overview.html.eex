@@ -80,7 +80,7 @@
                     @address.hash),
                     "data-test":
                     "token_hash_link"
-                  ) 
+                  )
                   %>
                 </dd>
               </dl>
@@ -154,7 +154,7 @@
                   to: address_path(@conn, :show, implementation_address),
                   class: "contract-address mb-2",
                   style: "margin-top: 0.5rem;"
-                ) 
+                )
                 %>
               </dd>
             </dl>
@@ -177,13 +177,37 @@
                     data-placement="top"
                     data-toggle="tooltip"
                     data-html="true"
-                    title='<%= "@ " <> usd_value <> "/" <> gettext("Ether") %>'  
+                    title='<%= "@ " <> usd_value <> "/" <> gettext("Ether") %>'
                   >
                   </span>)
                 </span>
               <% end %>
             </dd>
           </dl>
+          <%= if assigns[:epoch_transactions] do %>
+          <!-- Locked/Activated Balance -->
+          <dl class="row">
+            <dt class="col-sm-4 col-md-4 col-lg-3 text-muted">
+              <%= render BlockScoutWeb.CommonComponentsView, "_i_tooltip_2.html",
+                text: gettext("Block number in which the address was updated.") %>
+              <%= gettext("Activated Balance") %>
+            </dt>
+            <dd class="col-sm-8 col-md-8 col-lg-9">
+              <%= %Wei{value: Decimal.new(@current_active_votes)} |> Wei.to(:ether) %> <%= gettext "CELO" %>
+            </dd>
+          </dl>
+          <!-- Rewards -->
+          <dl class="row">
+            <dt class="col-sm-4 col-md-4 col-lg-3 text-muted">
+              <%= render BlockScoutWeb.CommonComponentsView, "_i_tooltip_2.html",
+                text: gettext("Block number in which the address was updated.") %>
+              <%= gettext("Lifetime Voting Rewards") %>
+            </dt>
+            <dd class="col-sm-8 col-md-8 col-lg-9">
+              <%= %Wei{value: Decimal.new(@epoch_transactions.total_reward_celo)} |> Wei.to(:ether) %> <%= gettext "CELO" %>
+            </dd>
+          </dl>
+          <% end %>
           <!-- Tokens -->
           <dl class="row" data-test="outside_of_dropdown">
             <dt class="col-sm-4 col-md-4 col-lg-3 text-muted">
@@ -284,4 +308,4 @@
   <%= render BlockScoutWeb.AddressView, "_validator_metadata_modal.html", address_name: address_name, validator_metadata: validator_metadata %>
 <% end %>
 
-<%= render BlockScoutWeb.Advertisement.BannersAdView, "_banner_728.html", conn: @conn %> 
+<%= render BlockScoutWeb.Advertisement.BannersAdView, "_banner_728.html", conn: @conn %>

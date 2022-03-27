@@ -9,6 +9,7 @@ $tile-type-token-transfer-color: $orange !default;
 $tile-type-unique-token-color: $orange !default;
 $tile-type-unique-token-image-color: $orange !default;
 $tile-type-internal-transaction-color: $teal !default;
+$tile-type-epoch-transaction-color: $happy-purple !default;
 $tile-type-api-documentation-color: $primary !default;
 $tile-type-progress-bar-color: $primary !default;
 $tile-status-error-reason: #ff7986 !default;
@@ -247,6 +248,10 @@ $tile-body-a-color: #5959d8 !default;
     $tile-type-internal-transaction-color
   );
   @include generate-tile-block(
+    ".tile-type-epoch-transaction",
+    $tile-type-epoch-transaction-color
+  );
+  @include generate-tile-block(
     ".tile-type-api-documentation",
     $tile-type-api-documentation-color
   );
@@ -344,8 +349,8 @@ $tile-body-a-color: #5959d8 !default;
         padding-right: 6px;
       }
     }
-    .tile-type-block {  
-      overflow: hidden; 
+    .tile-type-block {
+      overflow: hidden;
     }
     .row {
       @include media-breakpoint-down(lg) {
