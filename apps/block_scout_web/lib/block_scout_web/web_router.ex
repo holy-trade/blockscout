@@ -110,6 +110,13 @@ defmodule BlockScoutWeb.WebRouter do
       )
 
       resources(
+        "/epoch-transactions",
+        AddressEpochTransactionController,
+        only: [:index],
+        as: :epoch_transaction
+      )
+
+      resources(
         "/signed",
         AddressSignedController,
         only: [:index],
