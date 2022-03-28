@@ -152,7 +152,8 @@ defmodule Explorer.Celo.Util do
         order_by: [asc: block.number],
         where: event.topic == ^validator_epoch_payment_distributed,
         where: block.timestamp >= ^from_date,
-        where: block.timestamp < ^to_date
+        where: block.timestamp < ^to_date,
+        where: type(json_extract_path(event.params, [^payment_param]), :integer) != 0
       )
 
     activated_votes_for_group =
