@@ -67,6 +67,7 @@ defmodule Explorer.SetupValidatorAndGroupRewardsTest do
 
     log_4 = insert(:log, block: block_3)
     log_5 = insert(:log, block: block_3)
+    log_6 = insert(:log, block: block_3)
 
     insert(:contract_event, %{
       event: %ValidatorEpochPaymentDistributedEvent{
@@ -89,6 +90,18 @@ defmodule Explorer.SetupValidatorAndGroupRewardsTest do
         validator_payment: 200_000,
         group: group_address_2_hash,
         group_payment: 400_000
+      }
+    })
+
+    insert(:contract_event, %{
+      event: %ValidatorEpochPaymentDistributedEvent{
+        block_number: 10_748_160,
+        contract_address_hash: contract_address_hash,
+        log_index: log_6.index,
+        validator: validator_address_1_hash,
+        validator_payment: 0,
+        group: group_address_1_hash,
+        group_payment: 0
       }
     })
 
