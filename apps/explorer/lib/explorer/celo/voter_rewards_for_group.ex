@@ -5,10 +5,17 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
 
   import Ecto.Query,
     only: [
-      from: 2
+      from: 2,
+      where: 3
     ]
 
-  alias Explorer.Celo.{ContractEvents, Util}
+  import Explorer.Celo.Util,
+    only: [
+      epoch_by_block_number: 1,
+      set_default_from_and_to_dates_when_nil: 2
+    ]
+
+  alias Explorer.Celo.ContractEvents
   alias Explorer.Chain.{Block, CeloAccount, CeloContractEvent, CeloVoterVotes, Wei}
   alias Explorer.Repo
 
@@ -22,22 +29,10 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
   @validator_group_vote_activated ValidatorGroupVoteActivatedEvent.topic()
   @validator_group_active_vote_revoked ValidatorGroupActiveVoteRevokedEvent.topic()
 
-  def calculate(voter_address_hash, group_address_hash, to_date \\ DateTime.utc_now()) do
-    query =
-      from(event in CeloContractEvent,
-        inner_join: account in CeloAccount,
-        on: account.address == fragment("cast(?->>'group' AS bytea)", event.params),
-        select: %{
-          amount_activated_or_revoked: json_extract_path(event.params, ["value"]),
-          block_number: event.block_number,
-          event: event.topic,
-          group_name: account.name
-        },
-        order_by: [asc: event.block_number],
-        where:
-          event.topic == ^@validator_group_active_vote_revoked or
-            event.topic == ^@validator_group_vote_activated
-      )
+  def calculate(voter_address_hash, group_address_hash, from_date, to_date) do
+    {from_date, to_date} = set_default_from_and_to_dates_when_nil(from_date, to_date)
+
+    query = events_query(from_date, to_date)
 
     voter_activated_or_revoked_votes_for_group_events =
       query
@@ -45,64 +40,59 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
       |> CeloContractEvent.query_by_group_param(group_address_hash)
       |> Repo.all()
 
-    case voter_activated_or_revoked_votes_for_group_events do
-      [] ->
-        %{rewards: [], total: 0, group: group_address_hash}
+    # If no activated event present since genesis block, we don't have to look for votes for this voter/group pair
+    if Enum.empty?(voter_activated_or_revoked_votes_for_group_events) and from_date == ~U[2020-04-22 16:00:00.000000Z] do
+      %{rewards: [], total: 0, group: group_address_hash}
+    else
+      query = votes_base_query(voter_address_hash, group_address_hash, to_date)
 
-      voter_activated_or_revoked ->
-        [voter_activated_earliest_block | _] = voter_activated_or_revoked
+      votes_query_beginning_after_first_event_or_passed_from_date =
+        votes_starting_point(query, from_date, voter_activated_or_revoked_votes_for_group_events)
 
-        %{group_name: group_name} = voter_activated_earliest_block
+      voter_votes_for_group =
+        votes_query_beginning_after_first_event_or_passed_from_date
+        |> Repo.all()
 
-        query =
-          from(votes in CeloVoterVotes,
-            inner_join: block in Block,
-            on: votes.block_hash == block.hash,
-            select: %{
-              block_hash: votes.block_hash,
-              block_number: votes.block_number,
-              date: block.timestamp,
-              votes: votes.active_votes
-            },
-            where: votes.account_hash == ^voter_address_hash,
-            where: votes.group_hash == ^group_address_hash,
-            where: votes.block_number >= ^voter_activated_earliest_block.block_number,
-            where: block.timestamp < ^to_date
-          )
+      events_and_votes_chunked_by_epoch =
+        merge_events_with_votes_and_chunk_by_epoch(
+          voter_activated_or_revoked_votes_for_group_events,
+          voter_votes_for_group
+        )
 
-        voter_votes_for_group =
-          query
-          |> Repo.all()
+      {rewards, {rewards_sum, _}} = calculate_rewards_and_rewards_sum(events_and_votes_chunked_by_epoch)
 
-        events_and_votes_chunked_by_epoch =
-          merge_events_with_votes_and_chunk_by_epoch(
-            voter_activated_or_revoked_votes_for_group_events,
-            voter_votes_for_group
-          )
+      # When from_date is different from the genesis block, the votes for one epoch prior to the time span's start is
+      # necessary for the calculation. Here we remove this extra epoch after the rewards are calculated.
+      {rewards, rewards_sum} = adjust_rewards_and_rewards_sum(from_date, rewards, rewards_sum)
 
-        {rewards, {rewards_sum, _}} =
-          Enum.map_reduce(events_and_votes_chunked_by_epoch, {0, 0}, fn epoch, {rewards_sum, previous_epoch_votes} ->
-            epoch_reward = calculate_single_epoch_reward(epoch, previous_epoch_votes)
+      %CeloAccount{name: group_name} = Repo.one(
+        from(account in CeloAccount, where: account.address == ^to_string(group_address_hash))
+      )
 
-            current_epoch_votes = epoch |> Enum.reverse() |> hd()
-            %Wei{value: current_votes} = current_epoch_votes.votes
-            current_votes_integer = Decimal.to_integer(current_votes)
-
-            {
-              %{
-                amount: epoch_reward,
-                block_hash: current_epoch_votes.block_hash,
-                block_number: current_epoch_votes.block_number,
-                date: current_epoch_votes.date,
-                epoch_number: Util.epoch_by_block_number(current_epoch_votes.block_number),
-                votes: current_epoch_votes.votes
-              },
-              {epoch_reward + rewards_sum, current_votes_integer}
-            }
-          end)
-
-        %{rewards: rewards, total: rewards_sum, group: group_address_hash, group_name: group_name}
+      %{rewards: rewards, total: rewards_sum, group: group_address_hash, group_name: group_name}
     end
+  end
+
+  defp calculate_rewards_and_rewards_sum(events_and_votes_chunked_by_epoch) do
+    Enum.map_reduce(events_and_votes_chunked_by_epoch, {0, 0}, fn epoch, {rewards_sum, previous_epoch_votes} ->
+      epoch_reward = calculate_single_epoch_reward(epoch, previous_epoch_votes)
+
+      current_epoch_votes = epoch |> Enum.reverse() |> hd()
+      %Wei{value: current_votes} = current_epoch_votes.votes
+      current_votes_integer = Decimal.to_integer(current_votes)
+
+      {
+        %{
+          amount: epoch_reward,
+          block_hash: current_epoch_votes.block_hash,
+          block_number: current_epoch_votes.block_number,
+          date: current_epoch_votes.date,
+          epoch_number: epoch_by_block_number(current_epoch_votes.block_number),
+          votes: current_epoch_votes.votes
+        },
+        {epoch_reward + rewards_sum, current_votes_integer}
+      }
+    end)
   end
 
   def calculate_single_epoch_reward(epoch, previous_epoch_votes) do
@@ -135,5 +125,61 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
     (events ++ votes)
     |> Enum.sort_by(& &1.block_number)
     |> Enum.chunk_while([], chunk_fun, after_fun)
+  end
+
+  defp events_query(from_date, to_date) do
+    from(event in CeloContractEvent,
+      inner_join: block in Block,
+      on: event.block_number == block.number,
+      select: %{
+        amount_activated_or_revoked: json_extract_path(event.params, ["value"]),
+        block_number: event.block_number,
+        event: event.topic
+      },
+      order_by: [asc: event.block_number],
+      where:
+        event.topic == ^@validator_group_active_vote_revoked or
+        event.topic == ^@validator_group_vote_activated,
+      where: block.timestamp >= ^from_date,
+      where: block.timestamp < ^to_date
+    )
+  end
+
+  defp votes_base_query(voter_address_hash, group_address_hash, to_date) do
+    from(votes in CeloVoterVotes,
+      inner_join: block in Block,
+      on: votes.block_hash == block.hash,
+      select: %{
+        block_hash: votes.block_hash,
+        block_number: votes.block_number,
+        date: block.timestamp,
+        votes: votes.active_votes
+      },
+      where: votes.account_hash == ^voter_address_hash,
+      where: votes.group_hash == ^group_address_hash,
+      where: block.timestamp < ^to_date
+    )
+  end
+
+  defp votes_starting_point(query, ~U[2020-04-22 16:00:00.000000Z] = _from_date, voter_activated_or_revoked_votes_for_group_events) do
+    [voter_activated_earliest_block | _] = voter_activated_or_revoked_votes_for_group_events
+    query
+    |> where([votes, _block], votes.block_number >= ^voter_activated_earliest_block.block_number)
+  end
+
+  defp votes_starting_point(query, from_date, _voter_activated_or_revoked_votes_for_group_events) do
+    one_day_before_from_date = DateTime.add(from_date, -24 * 60 * 60)
+    query
+    |> where([_votes, block], block.timestamp >= ^one_day_before_from_date)
+  end
+
+  defp adjust_rewards_and_rewards_sum(from_date, rewards, rewards_sum) do
+    if from_date == ~U[2020-04-22 16:00:00.000000Z] do
+      {rewards, rewards_sum}
+    else
+      [first | rewards_without_the_first] = rewards
+      rewards_sum_without_first = rewards_sum - first.amount
+      {rewards_without_the_first, rewards_sum_without_first}
+    end
   end
 end

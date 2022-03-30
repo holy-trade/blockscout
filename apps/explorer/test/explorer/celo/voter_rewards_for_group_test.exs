@@ -6,7 +6,7 @@ defmodule Explorer.Celo.VoterRewardsForGroupTest do
   alias Explorer.SetupVoterRewardsTest
 
   describe "calculate/2" do
-    test "returns all rewards for a voter voting for a specific group" do
+    test "when no from_date and to_date passed" do
       {
         voter_hash,
         group_hash,
@@ -17,7 +17,7 @@ defmodule Explorer.Celo.VoterRewardsForGroupTest do
         block_7_hash
       } = SetupVoterRewardsTest.setup_for_group()
 
-      rewards = VoterRewardsForGroup.calculate(voter_hash, group_hash)
+      rewards = VoterRewardsForGroup.calculate(voter_hash, group_hash, nil, nil)
 
       assert rewards ==
                %{
@@ -56,6 +56,50 @@ defmodule Explorer.Celo.VoterRewardsForGroupTest do
                      date: ~U[2022-01-04 17:42:43.162804Z],
                      epoch_number: 622,
                      votes: %Wei{value: Decimal.new(0)}
+                   }
+                 ]
+               }
+    end
+
+    test "when from_date and to_date passed" do
+      {
+        voter_hash,
+        group_hash,
+        group_name,
+        _block_2_hash,
+        block_3_hash,
+        block_5_hash,
+        _block_7_hash
+      } = SetupVoterRewardsTest.setup_for_group()
+
+      rewards = VoterRewardsForGroup.calculate(
+        voter_hash,
+        group_hash,
+        ~U[2022-01-02 00:00:00.000000Z],
+        ~U[2022-01-04 00:00:00.000000Z]
+      )
+
+      assert rewards ==
+               %{
+                 group: group_hash,
+                 group_name: group_name,
+                 total: 95,
+                 rewards: [
+                   %{
+                     amount: 20,
+                     block_hash: block_3_hash,
+                     block_number: 10_713_600,
+                     date: ~U[2022-01-02 17:42:43.162804Z],
+                     epoch_number: 620,
+                     votes: %Wei{value: Decimal.new(750)}
+                   },
+                   %{
+                     amount: 75,
+                     block_hash: block_5_hash,
+                     block_number: 10_730_880,
+                     date: ~U[2022-01-03 17:42:43.162804Z],
+                     epoch_number: 621,
+                     votes: %Wei{value: Decimal.new(1075)}
                    }
                  ]
                }
