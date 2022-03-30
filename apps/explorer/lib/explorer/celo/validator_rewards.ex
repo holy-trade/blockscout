@@ -2,14 +2,43 @@ defmodule Explorer.Celo.ValidatorRewards do
   @moduledoc """
     Module responsible for calculating a validator's rewards for a given time frame.
   """
+
+  import Ecto.Query,
+    only: [
+      join: 5,
+      select_merge: 3
+    ]
+
+  alias Explorer.Repo
+  alias Explorer.Chain.{CeloAccount, CeloContractEvent}
+
   import Explorer.Celo.Util,
     only: [
       add_input_account_to_individual_rewards_and_calculate_sum: 2,
-      fetch_and_structure_rewards: 4
+      base_query: 3,
+      last_rewards: 2,
+      structure_rewards: 1,
+      set_default_from_and_to_dates_when_nil: 2
     ]
 
-  def calculate(validator_address_hash, from_date, to_date) do
-    res = fetch_and_structure_rewards(validator_address_hash, from_date, to_date, "validator")
+  def calculate(validator_address_hash, from_date, to_date, params \\ []) do
+    {from_date, to_date} = set_default_from_and_to_dates_when_nil(from_date, to_date)
+
+    query =
+      base_query(from_date, to_date, "validator")
+      |> join(:inner, [event, block], account in CeloAccount,
+        on: account.address == fragment("cast(?->>'group' AS bytea)", event.params)
+      )
+      |> select_merge([_event, _block, account], %{group_name: account.name})
+      |> CeloContractEvent.query_by_validator_param(validator_address_hash)
+
+    query_with_pagination = last_rewards(query, params)
+
+    raw_rewards =
+      query_with_pagination
+      |> Repo.all()
+
+    res = structure_rewards(raw_rewards)
 
     res
     |> then(fn {rewards, total} ->
