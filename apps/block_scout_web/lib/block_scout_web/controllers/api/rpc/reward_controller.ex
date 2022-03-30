@@ -9,7 +9,7 @@ defmodule BlockScoutWeb.API.RPC.RewardController do
          {:group_address_param, {:ok, group_address_param}} <- fetch_address(params, "groupAddress"),
          {:voter_format, {:ok, voter_address_hash}} <- to_address_hash(voter_address_param, :voter_format),
          {:group_format, {:ok, group_address_hash}} <- to_address_hash(group_address_param, :group_format),
-         rewards <- VoterRewardsForGroup.calculate(voter_address_hash, group_address_hash) do
+         rewards <- VoterRewardsForGroup.calculate(voter_address_hash, group_address_hash, nil, nil) do
       render(conn, :getvoterrewardsforgroup, rewards: rewards)
     else
       {:voter_address_param, :error} ->
