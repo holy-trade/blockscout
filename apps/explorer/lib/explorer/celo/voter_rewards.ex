@@ -23,7 +23,7 @@ defmodule Explorer.Celo.VoterRewards do
 
   alias Election.ValidatorGroupVoteActivatedEvent
 
-  def calculate(voter_address_hash, from_date, to_date, params \\ []) do
+  def calculate(voter_address_hash, from_date, to_date, params \\ %{}) do
     {from_date, to_date} = set_default_from_and_to_dates_when_nil(from_date, to_date)
 
     voter_rewards_for_group = Application.get_env(:explorer, :voter_rewards_for_group)

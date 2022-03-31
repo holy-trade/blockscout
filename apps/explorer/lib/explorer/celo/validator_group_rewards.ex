@@ -20,7 +20,7 @@ defmodule Explorer.Celo.ValidatorGroupRewards do
       set_default_from_and_to_dates_when_nil: 2
     ]
 
-  def calculate(group_address_hash, from_date, to_date, params \\ []) do
+  def calculate(group_address_hash, from_date, to_date, params \\ %{}) do
     {from_date, to_date} = set_default_from_and_to_dates_when_nil(from_date, to_date)
 
     query =

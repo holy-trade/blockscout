@@ -92,7 +92,7 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
     end
   end
 
-  defp calculate_based_on_account_type(address, params \\ %{} do
+  defp calculate_based_on_account_type(address, params \\ %{}) do
     case address.celo_account.account_type do
       "normal" -> VoterRewards.calculate(address.hash, nil, nil, params)
       "validator" -> ValidatorRewards.calculate(address.hash, nil, nil, params)
