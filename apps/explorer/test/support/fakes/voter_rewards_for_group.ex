@@ -43,28 +43,14 @@ defmodule Explorer.Fakes.VoterRewardsForGroup do
     bytes: <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5>>
   }
 
-  def calculate(voter_address_hash, group_address_hash, _to_date)
+  def calculate(voter_address_hash, group_address_hash, _from_date, _to_date, _params)
       when group_address_hash == @group_address_1_hash and
              voter_address_hash == @voter_address_1_hash do
     %{
       group: group_address_hash,
       group_name: "Bison Trails",
-      total: 350,
+      total: 250,
       rewards: [
-        %{
-          amount: 80,
-          block_hash: @block_1_hash,
-          block_number: @block_1_number,
-          date: ~U[2022-01-01 17:42:43.162804Z],
-          epoch_number: 619
-        },
-        %{
-          amount: 20,
-          block_hash: @block_2_hash,
-          block_number: @block_2_number,
-          date: ~U[2022-01-02 17:42:43.162804Z],
-          epoch_number: 620
-        },
         %{
           amount: 75,
           block_hash: @block_3_hash,
@@ -90,7 +76,7 @@ defmodule Explorer.Fakes.VoterRewardsForGroup do
     }
   end
 
-  def calculate(voter_address_hash, group_address_hash, _to_date)
+  def calculate(voter_address_hash, group_address_hash, _from_date, _to_date, _params)
       when group_address_hash == @group_address_1_hash and
              voter_address_hash == @voter_address_2_hash do
     %{
@@ -109,7 +95,7 @@ defmodule Explorer.Fakes.VoterRewardsForGroup do
     }
   end
 
-  def calculate(voter_address_hash, group_address_hash, _to_date)
+  def calculate(voter_address_hash, group_address_hash, _from_date, _to_date, _params)
       when group_address_hash == @group_address_1_hash and
              voter_address_hash == @voter_address_2_hash do
     %{
@@ -128,7 +114,8 @@ defmodule Explorer.Fakes.VoterRewardsForGroup do
     }
   end
 
-  def calculate(_voter_address_hash, group_address_hash, _to_date) when group_address_hash == @group_address_2_hash do
+  def calculate(_voter_address_hash, group_address_hash, _from_date, _to_date, _params)
+      when group_address_hash == @group_address_2_hash do
     %{
       group: group_address_hash,
       group_name: "keyko.io",
