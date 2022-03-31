@@ -4,7 +4,8 @@ defmodule Explorer.Celo.VoterRewards do
   """
   import Explorer.Celo.Util,
     only: [
-      add_input_account_to_individual_rewards_and_calculate_sum: 2
+      add_input_account_to_individual_rewards_and_calculate_sum: 2,
+      set_default_from_and_to_dates_when_nil: 2
     ]
 
   import Ecto.Query,
@@ -24,18 +25,8 @@ defmodule Explorer.Celo.VoterRewards do
 
   alias Election.ValidatorGroupVoteActivatedEvent
 
-  def calculate(voter_address_hash, from_date, to_date) do
-    from_date =
-      case from_date do
-        nil -> ~U[2020-04-22 16:00:00.000000Z]
-        from_date -> from_date
-      end
-
-    to_date =
-      case to_date do
-        nil -> DateTime.utc_now()
-        to_date -> to_date
-      end
+  def calculate(voter_address_hash, from_date, to_date, params \\ []) do
+    {from_date, to_date} = set_default_from_and_to_dates_when_nil(from_date, to_date)
 
     voter_rewards_for_group = Application.get_env(:explorer, :voter_rewards_for_group)
     validator_group_vote_activated = ValidatorGroupVoteActivatedEvent.topic()
@@ -55,7 +46,7 @@ defmodule Explorer.Celo.VoterRewards do
     rewards_for_each_group =
       validator_group_vote_activated_events
       |> Enum.map(fn %ValidatorGroupVoteActivatedEvent{group: group} ->
-        voter_rewards_for_group.calculate(voter_address_hash, group, to_date)
+        voter_rewards_for_group.calculate(voter_address_hash, group, from_date, to_date, params)
       end)
 
     structured_rewards_for_given_period =
@@ -68,7 +59,6 @@ defmodule Explorer.Celo.VoterRewards do
           Enum.map(rewards, &Map.put(&1, :group, group))
       end)
       |> List.flatten()
-      |> Enum.filter(fn x -> DateTime.compare(x.date, from_date) != :lt end)
       |> Enum.map_reduce(0, fn x, acc -> {x, acc + x.amount} end)
       |> then(fn {rewards, total} ->
         %{

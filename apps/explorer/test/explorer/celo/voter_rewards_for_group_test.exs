@@ -72,12 +72,13 @@ defmodule Explorer.Celo.VoterRewardsForGroupTest do
         _block_7_hash
       } = SetupVoterRewardsTest.setup_for_group()
 
-      rewards = VoterRewardsForGroup.calculate(
-        voter_hash,
-        group_hash,
-        ~U[2022-01-02 00:00:00.000000Z],
-        ~U[2022-01-04 00:00:00.000000Z]
-      )
+      rewards =
+        VoterRewardsForGroup.calculate(
+          voter_hash,
+          group_hash,
+          ~U[2022-01-02 00:00:00.000000Z],
+          ~U[2022-01-04 00:00:00.000000Z]
+        )
 
       assert rewards ==
                %{
