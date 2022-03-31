@@ -19,7 +19,7 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
     with {:ok, address_hash} <- Chain.string_to_address_hash(address_hash_string),
          {:ok, address} <- Chain.hash_to_address(address_hash),
          {:ok, false} <- AccessHelpers.restricted_access?(address_hash_string, params) do
-      epoch_transactions_object = calculate_based_on_account_type(address)
+      epoch_transactions_object = calculate_based_on_account_type(address, params)
       epoch_transactions_plus_one = epoch_transactions_object.rewards
       {epoch_transactions, next_page} = split_list_by_page(epoch_transactions_plus_one)
 
@@ -60,6 +60,7 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
          {:ok, address} <- Chain.hash_to_address(address_hash),
          {:ok, false} <- AccessHelpers.restricted_access?(address_hash_string, params) do
       epoch_transactions = calculate_based_on_account_type(address)
+
       current_active_votes =
         if address.celo_account.account_type == "normal" do
           get_current_active_votes(epoch_transactions.rewards)
@@ -91,10 +92,10 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
     end
   end
 
-  defp calculate_based_on_account_type(address) do
+  defp calculate_based_on_account_type(address, params \\ []) do
     case address.celo_account.account_type do
-      "normal" -> VoterRewards.calculate(address.hash, nil, nil)
-      "validator" -> ValidatorRewards.calculate(address.hash, nil, nil)
+      "normal" -> VoterRewards.calculate(address.hash, nil, nil, params)
+      "validator" -> ValidatorRewards.calculate(address.hash, nil, nil, params)
       "group" -> ValidatorGroupRewards.calculate(address.hash, nil, nil)
     end
   end
