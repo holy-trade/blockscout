@@ -10,11 +10,11 @@ defmodule Explorer.Celo.ValidatorGroupRewards do
 
   alias Explorer.Repo
   alias Explorer.Chain.{CeloAccount, CeloContractEvent}
+  alias Explorer.Celo.ContractEvents.Validators.ValidatorEpochPaymentDistributedEvent
 
   import Explorer.Celo.Util,
     only: [
       add_input_account_to_individual_rewards_and_calculate_sum: 2,
-      base_query: 3,
       last_rewards: 2,
       structure_rewards: 1,
       set_default_from_and_to_dates_when_nil: 2
@@ -24,7 +24,7 @@ defmodule Explorer.Celo.ValidatorGroupRewards do
     {from_date, to_date} = set_default_from_and_to_dates_when_nil(from_date, to_date)
 
     query =
-      base_query(from_date, to_date, "group")
+     ValidatorEpochPaymentDistributedEvent.base_query(from_date, to_date, "group")
       |> join(:inner, [event, block], account in CeloAccount,
         on: account.address == fragment("cast(?->>'validator' AS bytea)", event.params)
       )

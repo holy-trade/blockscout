@@ -139,31 +139,6 @@ defmodule Explorer.Celo.Util do
     {from_date, to_date}
   end
 
-  def base_query(from_date, to_date, fetch_for_validator_or_group) do
-    validator_epoch_payment_distributed = ValidatorEpochPaymentDistributedEvent.topic()
-    payment_param = fetch_for_validator_or_group <> "_payment"
-
-    decimal_zero = Decimal.new(0)
-
-    from(event in CeloContractEvent,
-      inner_join: block in Block,
-      on: event.block_number == block.number,
-      select: %{
-        amount: json_extract_path(event.params, [^payment_param]),
-        date: block.timestamp,
-        block_number: block.number,
-        block_hash: block.hash,
-        group: json_extract_path(event.params, ["group"]),
-        validator: json_extract_path(event.params, ["validator"])
-      },
-      order_by: [asc: block.number],
-      where: event.topic == ^validator_epoch_payment_distributed,
-      where: block.timestamp >= ^from_date,
-      where: block.timestamp < ^to_date,
-      where: type(json_extract_path(event.params, [^payment_param]), :decimal) != ^decimal_zero
-    )
-  end
-
   def structure_rewards(raw_rewards) do
     raw_rewards
     |> Enum.map(fn x ->

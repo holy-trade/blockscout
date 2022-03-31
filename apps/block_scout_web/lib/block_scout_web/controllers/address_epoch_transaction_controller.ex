@@ -5,7 +5,7 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
 
   use BlockScoutWeb, :controller
 
-  import BlockScoutWeb.Chain, only: [paging_options: 1, next_page_params: 3, split_list_by_page: 1]
+  import BlockScoutWeb.Chain, only: [ next_page_params: 3, split_list_by_page: 1]
 
   alias BlockScoutWeb.{AccessHelpers, Controller, EpochTransactionView}
   alias Explorer.Celo.{ValidatorGroupRewards, ValidatorRewards, VoterRewards}
@@ -92,7 +92,7 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
     end
   end
 
-  defp calculate_based_on_account_type(address, params \\ []) do
+  defp calculate_based_on_account_type(address, params \\ %{} do
     case address.celo_account.account_type do
       "normal" -> VoterRewards.calculate(address.hash, nil, nil, params)
       "validator" -> ValidatorRewards.calculate(address.hash, nil, nil, params)

@@ -3,39 +3,60 @@ defmodule Explorer.Celo.ValidatorRewards do
     Module responsible for calculating a validator's rewards for a given time frame.
   """
 
-  import Ecto.Query,
-    only: [
-      join: 5,
-      select_merge: 3
-    ]
+  import Ecto.Query
 
   alias Explorer.Repo
-  alias Explorer.Chain.{CeloAccount, CeloContractEvent}
+  alias Explorer.Chain.{Block, CeloAccount, CeloContractEvent}
+  alias Explorer.Celo.ContractEvents.Validators.ValidatorEpochPaymentDistributedEvent
 
   import Explorer.Celo.Util,
     only: [
       add_input_account_to_individual_rewards_and_calculate_sum: 2,
-      base_query: 3,
       last_rewards: 2,
       structure_rewards: 1,
       set_default_from_and_to_dates_when_nil: 2
     ]
 
-  def calculate(validator_address_hash, from_date, to_date, params \\ []) do
+  def calculate(validator_address_hash, from_date, to_date, params \\ %{show_empty: true}) do
     {from_date, to_date} = set_default_from_and_to_dates_when_nil(from_date, to_date)
 
     query =
-      base_query(from_date, to_date, "validator")
-      |> join(:inner, [event, block], account in CeloAccount,
+      ValidatorEpochPaymentDistributedEvent.query()
+      |> ValidatorEpochPaymentDistributedEvent.query_by_validator(validator_address_hash)
+      |> join(:inner, [event], account in CeloAccount,
+        as: :account,
         on: account.address == fragment("cast(?->>'group' AS bytea)", event.params)
       )
-      |> select_merge([_event, _block, account], %{group_name: account.name})
-      |> CeloContractEvent.query_by_validator_param(validator_address_hash)
+      |> join(:inner, [event], block in Block,
+        as: :block,
+        on: block.number == event.block_number
+      )
+      |> where([event, block: b], fragment("? BETWEEN ? and ? ", b.timestamp, ^from_date, ^to_date))
+      |> select([event, account: account, block: block], %{
+        amount: json_extract_path(event.params, ["validator_payment"]),
+        date: block.timestamp,
+        block_number: block.number,
+        block_hash: block.hash,
+        group: json_extract_path(event.params, ["group"]),
+        validator: json_extract_path(event.params, ["validator"]),
+        group_name: account.name
+      })
+      |> order_by([event], event.block_number)
+
+    query =
+      if Map.get(params, :show_empty, false) do
+        query |> where([event], fragment("ROUND((? ->> ?)::numeric) != 0", event.params, "validator_payment"))
+      else
+        query
+      end
+
+    # ValidatorEpochPaymentDistributedEvent.base_query(from_date, to_date, "validator")
+    # |> select_merge([_event, _block, account], %{group_name: account.name})
 
     query_with_pagination = last_rewards(query, params)
 
     raw_rewards =
-      query_with_pagination
+      query
       |> Repo.all()
 
     res = structure_rewards(raw_rewards)
