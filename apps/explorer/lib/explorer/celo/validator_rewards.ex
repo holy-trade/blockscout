@@ -46,12 +46,12 @@ defmodule Explorer.Celo.ValidatorRewards do
       })
       |> order_by([result], result.block_number)
 
-    filtered_query =
-      if Map.get(params, :show_empty) === false do
-        filtered_query |> where([event], fragment("ROUND((? ->> ?)::numeric) != 0", event.params, "validator_payment"))
-      else
-        filtered_query
-      end
+#    filtered_query =
+#      if Map.get(params, :show_empty) === false do
+#        filtered_query |> where([event], fragment("ROUND((? ->> ?)::numeric) != 0", event.params, "validator_payment"))
+#      else
+#        filtered_query
+#      end
 
     query_with_pagination = last_rewards(filtered_query, params)
 

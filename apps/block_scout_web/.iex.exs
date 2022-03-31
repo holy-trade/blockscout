@@ -1,6 +1,127 @@
 alias Explorer.Repo
 import Ecto.Query
+alias Explorer.Celo.ValidatorRewards
 
 defmodule SQLHelper do
   def to_string(query), do: Ecto.Adapters.SQL.to_sql(:all, Explorer.Repo, query) |> IO.inspect()
+end
+
+defmodule Helpers do
+  def validators() do
+    [ "0x35a5a989151683215ec36898bb4497f524556b69",
+      "0xe6d00b30a16eb21d2c3b4367c90ddeb4097a78a5",
+      "0x5c886da5e3b0e63f979633bdeb2a17be49f2e829",
+      "0x4e3c453b4897451e6f84c6869f533ca04250259a",
+      "0x307d958d9f0235058fe0a7e7e717a63d5ad6b143",
+      "0x7ff6c32b2cfc9bc6abddae17056e6d81c516806b",
+      "0xbe505db3e26655cd0a5488f396e391bfa523bea4",
+      "0x897c683206ddb5f134f451527c2b6f5e837407de",
+      "0x9018f223b37bee553721ed0bc93435239129c8e6",
+      "0x30e0bfc25df7642ee19ff4fbcbe9ddea4d1935bc",
+      "0xdb0625daf57c4b08367349bdbed2a0da069d497f",
+      "0x5e6a5e96616467afc672928c14b16c12f2373c9d",
+      "0x1bc92297fca4f975258eef03aaae4fcae80529be",
+      "0xf6741dc4f5563a67966065d330a4351b410146b7",
+      "0x17521f6f262b86b9f69566ab0eddbd96d38ff2d7",
+      "0xe34cd052e59ff830b286a125c52dde568ac8bd48",
+      "0xc538583c030227de48e3279c1009646f29dc097e",
+      "0xdd431a27adce5b957fe2fe877a65f0e6304d68a0",
+      "0x17650cbf3b536b4ad14cd3347eb830e27b9c4396",
+      "0x2edfe9e0c9ea37e9459da3b846e7f1bcce062494",
+      "0x670e94d7a79361b8a9b5599301c0f44ae7139d34",
+      "0x1ab89fa8bdbd48f4426379abeb59803dd5283e3f",
+      "0xe63ec388396912f52d73c6c9c6d06e629d7aea39",
+      "0x7ad4c2fc79cbd6304b178544df219797f3dff87a",
+      "0x02dc997790352e12fa90eb1a937dfef4bf8dbbc0",
+      "0xc3722118ccf6dba9fe35d8bedb09332c85174d57",
+      "0x1f15d4210e34dfeeec087c906b426509da1b01f1",
+      "0x90b056b00952d71bc7866c067b49f5b062098ac9",
+      "0xb2728edcc9c255c2d053ea6cae31cfd584b758d3",
+      "0x1aef9bf15de73adba318fc8aea3d2f45d120cc8a",
+      "0x5098a28bfa2da3183e36c009c7d63093b66441a5",
+      "0xd922294516b8e586aa2511daf89e89af97a976ef",
+      "0xbcc71f31a5987f10afd29f3be7119c05a14f5bcb",
+      "0x39b01620ecdeb8347270ee78dc962b0ea583b57a",
+      "0x0c7610f8f4da332c77c9800012009ccfa48f23e4",
+      "0x943e9a5c750adcc467575f4fe81bf6b1c3a2aed7",
+      "0x020e468c252ff18261b1996d25f0fff4f830cf7a",
+      "0x44a7af700aca1b24ecdb818df4d202772d606cb4",
+      "0x92aae14a531086a665daff6eedb5b71e00acc6d1",
+      "0x8d1a5ef84252586f0f841a9fcf4e31f23c4c21e0",
+      "0x48ac52662cbf32f8fc0cd8c1122c7560b482c2ad",
+      "0x8c1bf342693772a04bb223ea949f915ebf72521a",
+      "0xa65c5c32b58012d188f56e9305437fc545f99614",
+      "0xd818f03476ef422beddf720addf5b3d3fd8353fe",
+      "0x572bd94eef29d104f266e82b0781bc4b07086648",
+      "0x233c06edc757003ca4ec078012f517f21a24c55c",
+      "0x12125d1b7f01f32b3a741a6b97cb46f714f273aa",
+      "0x989f3f2684f96b8cdec308b4e7538a5a062890f0",
+      "0x474df04481f778b46fc71204c72b6a8be396f0ff",
+      "0x48de6c6668c24e5bd113d5c46d813c50fe2204d1"]
+    end
+
+    def validator_groups() do
+      [
+        "0xb1dae25904f8ee7183ebef89459922215218b3bf",
+        "0x69cd274c6acbc08f664ed7b2d54aab6615bc1d70",
+        "0x8493bd3de67ac341d4cc11531f96a1a2cdbf29ad",
+        "0x602b65795bcc64b2fb329ac004236e194f077158",
+        "0xa1e923892df867fb5cb7575cca2538c394ad1bd9",
+        "0xcc4b2bcbbc9639ef1e91f47acfd12bd131525e79",
+        "0xa09a2832aaea7bd486c03a8e8ef38bdcf6a69060",
+        "0xfa592ae90e407da044602342625aaabbf5d50c22",
+        "0x869b7f65801e75f087a493d9d3c8022dcf964b1f",
+        "0x249a6b2b260000b08f50a2480e2d703baf02e8be",
+        "0x4d5a51039ea45063d4b665b21755db20a738dadc",
+        "0x59428ac67d082b71d0a9eccd75ee0969ae79d929",
+        "0x9eb1d96b5f0bdd3114ea1461182c688178ae6c4c",
+        "0x6cf4bb9ff947610944c6d8e0e5ea26b1dea73196",
+        "0x15ed3f6b79f5fb9ef1d99d37314dd626b3005f0b",
+        "0xc24baeac0fd189637112b7e33d22fff2730af993",
+        "0x8a12cab622b8093208931fa008d12d6ba5af47e4",
+        "0x07fa1874ad4655ad0c763a7876503509be11e29e",
+        "0x8851f4852ce427191dc8d9065d720619889e3260",
+        "0x067e453918f2c44d937b05a7ee9dbfb804c54add",
+        "0x81ae1c73a326325216e25ff1af9ea3871195036e",
+        "0x2c2b0f71d59b546b2cafd222696589c13c3c325c",
+        "0x81383e7c8801b102f742f4f5a5fad06867212b05",
+        "0xbf55df76204f00acf296f76cf4aaf86a866a5eb0",
+        "0x3c86b6a27a074c1c4cc904d8808a1c33078db4e6",
+        "0x8954661e743c60c966e2ff6002b514126bb1cfe2",
+        "0x061e9958028dcaa66fd8b255ad95194203b6c4da",
+        "0x614b7654ba0cc6000abe526779911b70c1f7125a",
+        "0xd018838832f6112de72ee6cc9967c56b333a0d1c",
+        "0x82f8bcf96f24ba60ef041d192c7ce04c907e2fb8",
+        "0xeefcfdfc8f5ced9799a13eca58de2ba7534eab92",
+        "0xc8a81d473992c7c6d3f469a8263f24914625709d",
+        "0x0b04c6ca6f2ea2c57d51c28bb3e82b0c9b4072eb",
+        "0x35ae10f412503abcf9275133613e8df7f56e72be",
+        "0xa432da0ed5a2c15cbc681227ccec3b375908fdcb",
+        "0xe141831c2c1198d79b9ff61cd97c3baca7f071e0",
+        "0x3d451dd723797b3de938c5b22412032b6452591a",
+        "0x81cef0668e15639d0b101bdc3067699309d73bed",
+        "0x4da92da1afbf103f2b52dd29326e34c98ca1e78c",
+        "0x89d5bd54c43ddd10905a030de6ff02ebb6c51654",
+        "0x7c75b0b81a54359e9dccda9cb663ca2e3de6b710",
+        "0x70fc0b021dfdbb9a106d1ed8f35f59d3f23ecb7b",
+        "0x0d4f8cea48cdadeae345431577a64983c0535b12",
+        "0x47b2db6af05a55d42ed0f3731735f9479abf0673",
+        "0x8eb004dad9397b8f23e1279905c584920000756d",
+        "0xd19fb36b7f433fe13820767ef6d0e26fdbab68cc",
+        "0xb87f2354e34b26ba6406ac60ea99dcd8cd5e63bf",
+        "0x5402172e972b31fc9f0383f53f45823ab5037379",
+        "0xc764293de02189e248a8040a3d1b04eec599aa31",
+        "0x2fd49e97262d505fd76bb6e0e06ec10e1fd54589"
+      ]
+    end
+
+    def test_validation() do
+      from = ~U[2020-04-22 16:00:00.000000Z]
+      to = ~U[2022-03-31 12:41:45.944288Z]
+
+      validator = validators() |> Enum.random()
+
+      IO.puts("testing validator rewards for #{validator}")
+      ValidatorRewards.calculate(validator, from, to)
+    end
 end
