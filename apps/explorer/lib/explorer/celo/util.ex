@@ -154,7 +154,7 @@ defmodule Explorer.Celo.Util do
     |> Enum.map_reduce(0, fn x, acc -> {x, acc + x.amount} end)
   end
 
-  def last_rewards(query, [] = _params), do: query
+  def last_rewards(query, %{} = _params), do: query
 
   def last_rewards(query, %{"items_count" => limit, "epoch_number" => latest_epoch_number}) do
     query

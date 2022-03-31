@@ -6,7 +6,7 @@ defmodule Explorer.Celo.ValidatorRewards do
   import Ecto.Query
 
   alias Explorer.Repo
-  alias Explorer.Chain.{Block, CeloAccount, CeloContractEvent}
+  alias Explorer.Chain.{Block, CeloAccount}
   alias Explorer.Celo.ContractEvents.Validators.ValidatorEpochPaymentDistributedEvent
 
   import Explorer.Celo.Util,
@@ -20,7 +20,7 @@ defmodule Explorer.Celo.ValidatorRewards do
   def calculate(validator_address_hash, from_date, to_date, params \\ %{show_empty: true}) do
     {from_date, to_date} = set_default_from_and_to_dates_when_nil(from_date, to_date)
 
-    query =
+    base_query =
       ValidatorEpochPaymentDistributedEvent.query()
       |> ValidatorEpochPaymentDistributedEvent.query_by_validator(validator_address_hash)
       |> join(:inner, [event], account in CeloAccount,
@@ -31,6 +31,9 @@ defmodule Explorer.Celo.ValidatorRewards do
         as: :block,
         on: block.number == event.block_number
       )
+
+    filtered_query =
+      base_query
       |> where([event, block: b], fragment("? BETWEEN ? and ? ", b.timestamp, ^from_date, ^to_date))
       |> select([event, account: account, block: block], %{
         amount: json_extract_path(event.params, ["validator_payment"]),
@@ -41,22 +44,19 @@ defmodule Explorer.Celo.ValidatorRewards do
         validator: json_extract_path(event.params, ["validator"]),
         group_name: account.name
       })
-      |> order_by([event], event.block_number)
+      |> order_by([result], result.block_number)
 
-    query =
-      if Map.get(params, :show_empty, false) do
-        query |> where([event], fragment("ROUND((? ->> ?)::numeric) != 0", event.params, "validator_payment"))
+    filtered_query =
+      if Map.get(params, :show_empty) === false do
+        filtered_query |> where([event], fragment("ROUND((? ->> ?)::numeric) != 0", event.params, "validator_payment"))
       else
-        query
+        filtered_query
       end
 
-    # ValidatorEpochPaymentDistributedEvent.base_query(from_date, to_date, "validator")
-    # |> select_merge([_event, _block, account], %{group_name: account.name})
-
-    query_with_pagination = last_rewards(query, params)
+    query_with_pagination = last_rewards(filtered_query, params)
 
     raw_rewards =
-      query
+      query_with_pagination
       |> Repo.all()
 
     res = structure_rewards(raw_rewards)
