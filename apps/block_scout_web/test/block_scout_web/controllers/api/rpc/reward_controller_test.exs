@@ -101,6 +101,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
       {
         voter_hash,
         group_hash,
+        _group_name,
         block_2_hash,
         block_3_hash,
         block_5_hash,
@@ -238,7 +239,8 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
     end
 
     test "with valid voter and group address", %{conn: conn} do
-      {voter_address_1_hash, group_address_1_hash, group_address_2_hash} = SetupVoterRewardsTest.setup_for_all_groups()
+      {voter_1_hash, group_1_hash, group_2_hash, _group_1_name, _group_2_name} =
+        SetupVoterRewardsTest.setup_for_all_groups()
 
       expected_result = %{
         "rewards" => [
@@ -248,7 +250,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
             "blockNumber" => "10730880",
             "blockHash" => "0x0000000000000000000000000000000000000000000000000000000000000003",
             "epochNumber" => "621",
-            "group" => to_string(group_address_1_hash)
+            "group" => to_string(group_1_hash)
           },
           %{
             "amount" => "31",
@@ -256,7 +258,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
             "blockNumber" => "10748160",
             "blockHash" => "0x0000000000000000000000000000000000000000000000000000000000000004",
             "epochNumber" => "622",
-            "group" => to_string(group_address_1_hash)
+            "group" => to_string(group_1_hash)
           },
           %{
             "amount" => "77",
@@ -264,7 +266,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
             "blockNumber" => "10765440",
             "blockHash" => "0x0000000000000000000000000000000000000000000000000000000000000005",
             "epochNumber" => "623",
-            "group" => to_string(group_address_1_hash)
+            "group" => to_string(group_1_hash)
           },
           %{
             "amount" => "39",
@@ -272,7 +274,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
             "blockNumber" => "10748160",
             "blockHash" => "0x0000000000000000000000000000000000000000000000000000000000000004",
             "epochNumber" => "622",
-            "group" => to_string(group_address_2_hash)
+            "group" => to_string(group_2_hash)
           },
           %{
             "amount" => "78",
@@ -280,13 +282,13 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
             "blockNumber" => "10765440",
             "blockHash" => "0x0000000000000000000000000000000000000000000000000000000000000005",
             "epochNumber" => "623",
-            "group" => to_string(group_address_2_hash)
+            "group" => to_string(group_2_hash)
           }
         ],
         "totalRewardCelo" => "300",
         "from" => "2022-01-03 00:00:00.000000Z",
         "to" => "2022-01-06 00:00:00.000000Z",
-        "account" => to_string(voter_address_1_hash)
+        "account" => to_string(voter_1_hash)
       }
 
       response =
@@ -294,7 +296,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
         |> get("/api", %{
           "module" => "reward",
           "action" => "getvoterrewards",
-          "voterAddress" => to_string(voter_address_1_hash),
+          "voterAddress" => to_string(voter_1_hash),
           "from" => "2022-01-03T00:00:00.000000Z",
           "to" => "2022-01-06T00:00:00.000000Z"
         })
@@ -308,7 +310,8 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
     end
 
     test "with valid voter address list", %{conn: conn} do
-      {voter_1_hash, voter_2_hash, group_1_hash, group_2_hash} = SetupVoterRewardsTest.setup_for_multiple_accounts()
+      {voter_1_hash, voter_2_hash, group_1_hash, group_2_hash, _group_1_name, _group_2_name} =
+        SetupVoterRewardsTest.setup_for_multiple_accounts()
 
       expected_result = %{
         "rewards" => [
@@ -470,7 +473,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
     end
 
     test "with valid validator address", %{conn: conn} do
-      {validator_address_1_hash, group_address_1_hash, block_2_hash, block_3_hash} =
+      {validator_address_1_hash, _validator_1_name, group_address_1_hash, _group_1_name, block_2_hash, block_3_hash} =
         SetupValidatorAndGroupRewardsTest.setup()
 
       expected_result = %{
@@ -517,8 +520,9 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
     end
 
     test "with valid validator address list", %{conn: conn} do
-      {validator_address_1_hash, validator_address_2_hash, group_address_1_hash, group_address_2_hash, block_1_hash,
-       block_2_hash} = SetupValidatorAndGroupRewardsTest.setup_for_multiple_accounts()
+      {validator_address_1_hash, validator_address_2_hash, _validator_1_name, _validator_2_name, group_address_1_hash,
+        group_address_2_hash, _group_1_name, _group_2_name, block_1_hash, block_2_hash} =
+        SetupValidatorAndGroupRewardsTest.setup_for_multiple_accounts()
 
       expected_result = %{
         "rewards" => [
@@ -653,7 +657,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
     end
 
     test "with valid group address", %{conn: conn} do
-      {validator_address_1_hash, group_address_1_hash, block_2_hash, block_3_hash} =
+      {validator_address_1_hash, _validator_1_name, group_address_1_hash, _group_1_name, block_2_hash, block_3_hash} =
         SetupValidatorAndGroupRewardsTest.setup()
 
       expected_result = %{
@@ -700,8 +704,9 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
     end
 
     test "with valid group address list", %{conn: conn} do
-      {validator_address_1_hash, validator_address_2_hash, group_address_1_hash, group_address_2_hash, block_1_hash,
-       block_2_hash} = SetupValidatorAndGroupRewardsTest.setup_for_multiple_accounts()
+      {validator_address_1_hash, validator_address_2_hash, _validator_1_name, _validator_2_name, group_address_1_hash,
+        group_address_2_hash, _group_1_name, _group_2_name, block_1_hash, block_2_hash} =
+        SetupValidatorAndGroupRewardsTest.setup_for_multiple_accounts()
 
       expected_result = %{
         "rewards" => [
