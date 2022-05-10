@@ -37,6 +37,8 @@ defmodule Explorer.Chain.Transaction do
 
   @required_attrs ~w(from_address_hash gas gas_price hash input nonce r s v value)a
 
+  @required_attrs_for_1559 ~w(type)a
+
   @typedoc """
   X coordinate module n in
   [Elliptic Curve Digital Signature Algorithm](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm)
@@ -434,11 +436,18 @@ defmodule Explorer.Chain.Transaction do
 
   """
   def changeset(%__MODULE__{} = transaction, attrs \\ %{}) do
-    attrs_to_cast = @required_attrs ++ @optional_attrs
+    enabled_1559 = Application.get_env(:explorer, :enabled_1559_support)
+
+    required_attrs = if enabled_1559, do: @required_attrs ++ @required_attrs_for_1559, else: @required_attrs
+
+    attrs_to_cast =
+      if enabled_1559,
+        do: @required_attrs ++ @required_attrs_for_1559 ++ @optional_attrs,
+        else: @required_attrs ++ @optional_attrs
 
     transaction
     |> cast(attrs, attrs_to_cast)
-    |> validate_required(@required_attrs)
+    |> validate_required(required_attrs)
     |> validate_collated()
     |> validate_error()
     |> validate_status()

@@ -279,6 +279,13 @@ defmodule BlockScoutWeb.WebRouter do
           only: [:index],
           as: :metadata
         )
+
+        resources(
+          "/token-holders",
+          Tokens.Instance.HolderController,
+          only: [:index],
+          as: :holder
+        )
       end
     end
 
@@ -330,6 +337,13 @@ defmodule BlockScoutWeb.WebRouter do
           only: [:index],
           as: :metadata
         )
+
+        resources(
+          "/token-holders",
+          Tokens.Instance.HolderController,
+          only: [:index],
+          as: :holder
+        )
       end
     end
 
@@ -374,6 +388,8 @@ defmodule BlockScoutWeb.WebRouter do
     get("/token-counters", Tokens.TokenController, :token_counters)
 
     get("/stats", StatsController, :index)
+
+    get("/verified-contracts", VerifiedContractsController, :index)
 
     get("/*path", PageNotFoundController, :index)
   end
