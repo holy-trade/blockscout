@@ -436,18 +436,11 @@ defmodule Explorer.Chain.Transaction do
 
   """
   def changeset(%__MODULE__{} = transaction, attrs \\ %{}) do
-    enabled_1559 = Application.get_env(:explorer, :enabled_1559_support)
-
-    required_attrs = if enabled_1559, do: @required_attrs ++ @required_attrs_for_1559, else: @required_attrs
-
-    attrs_to_cast =
-      if enabled_1559,
-        do: @required_attrs ++ @required_attrs_for_1559 ++ @optional_attrs,
-        else: @required_attrs ++ @optional_attrs
+    attrs_to_cast = @required_attrs ++ @optional_attrs
 
     transaction
     |> cast(attrs, attrs_to_cast)
-    |> validate_required(required_attrs)
+    |> validate_required(@required_attrs)
     |> validate_collated()
     |> validate_error()
     |> validate_status()
