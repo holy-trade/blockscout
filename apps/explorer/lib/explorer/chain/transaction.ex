@@ -437,7 +437,7 @@ defmodule Explorer.Chain.Transaction do
   """
   def changeset(%__MODULE__{} = transaction, attrs \\ %{}) do
     attrs_to_cast = @required_attrs ++ @optional_attrs
-    
+
     transaction
     |> cast(attrs, attrs_to_cast)
     |> validate_required(@required_attrs)
