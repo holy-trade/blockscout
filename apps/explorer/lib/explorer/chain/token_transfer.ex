@@ -125,8 +125,8 @@ defmodule Explorer.Chain.TokenTransfer do
     timestamps()
   end
 
-  @required_attrs ~w(block_number log_index from_address_hash to_address_hash token_contract_address_hash transaction_hash block_hash)a
-  @optional_attrs ~w(amount token_id amounts comment token_ids)a
+  @required_attrs ~w(block_number log_index from_address_hash to_address_hash token_contract_address_hash block_hash)a
+  @optional_attrs ~w(amount token_id transaction_hash amounts comment token_ids)a
 
   @doc false
   def changeset(%TokenTransfer{} = struct, params \\ %{}) do
