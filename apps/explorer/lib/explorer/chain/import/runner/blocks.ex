@@ -14,7 +14,6 @@ defmodule Explorer.Chain.Import.Runner.Blocks do
   alias Explorer.Chain.Import.Runner
   alias Explorer.Repo, as: ExplorerRepo
 
-
   @behaviour Runner
 
   # milliseconds
