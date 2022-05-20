@@ -10,12 +10,14 @@ defmodule Explorer.Celo.VoterRewards do
   import Ecto.Query,
     only: [
       distinct: 3,
+      from: 2,
       order_by: 3,
       where: 3
     ]
 
   alias Explorer.Celo.ContractEvents
   alias Explorer.Chain.CeloContractEvent
+  alias Explorer.Chain.Hash.Address
   alias Explorer.Repo
 
   alias ContractEvents.{Election, EventMap}
@@ -86,5 +88,26 @@ defmodule Explorer.Celo.VoterRewards do
       add_input_account_to_individual_rewards_and_calculate_sum(reward_lists_chunked_by_account, :account)
 
     %{from: from_date, to: to_date, rewards: rewards, total_reward_celo: rewards_sum}
+  end
+
+  @spec subtract_activated_add_revoked(%{
+          block_number: non_neg_integer(),
+          account_hash: Address,
+          group_hash: Address
+        }) :: integer()
+  def subtract_activated_add_revoked(entry) do
+    from(event in CeloContractEvent,
+      select:
+        fragment(
+          "SUM(CAST(params->>'value' AS numeric) * CASE name WHEN ? THEN -1 ELSE 1 END)",
+          ^"ValidatorGroupVoteActivated"
+        ),
+      where: event.name in ["ValidatorGroupVoteActivated", "ValidatorGroupActiveVoteRevoked"],
+      where: event.block_number == ^entry.block_number
+    )
+    |> CeloContractEvent.query_by_voter_param(entry.account_hash)
+    |> CeloContractEvent.query_by_group_param(entry.group_hash)
+    |> Repo.one()
+    |> Decimal.to_integer()
   end
 end
