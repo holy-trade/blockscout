@@ -51,7 +51,6 @@ defmodule Explorer.Chain.Import.Runner.CeloValidatorGroupVotes do
             reward.block_hash,
             :fetch_validator_group_data
           )
-          :ok
         end)
 
       {:ok, changes}

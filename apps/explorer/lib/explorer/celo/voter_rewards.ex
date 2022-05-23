@@ -90,11 +90,6 @@ defmodule Explorer.Celo.VoterRewards do
     %{from: from_date, to: to_date, rewards: rewards, total_reward_celo: rewards_sum}
   end
 
-  @spec subtract_activated_add_revoked(%{
-          block_number: non_neg_integer(),
-          account_hash: Address,
-          group_hash: Address
-        }) :: integer()
   def subtract_activated_add_revoked(entry) do
     query =
       from(event in CeloContractEvent,

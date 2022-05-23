@@ -52,7 +52,6 @@ defmodule Explorer.Chain.Import.Runner.CeloVoterVotes do
             votes.block_hash,
             :fetch_voter_votes
           )
-          :ok
         end)
 
       {:ok, changes}

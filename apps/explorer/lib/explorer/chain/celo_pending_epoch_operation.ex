@@ -5,13 +5,11 @@ defmodule Explorer.Chain.CeloPendingEpochOperation do
 
   use Explorer.Schema
 
-  alias Explorer.Chain.Block
   alias Explorer.Repo
 
   import Ecto.Query,
     only: [
-      from: 2,
-      where: 3
+      from: 2
     ]
 
   @required_attrs ~w(block_number fetch_epoch_rewards election_rewards)a
@@ -60,7 +58,7 @@ defmodule Explorer.Chain.CeloPendingEpochOperation do
 
   @spec falsify_celo_pending_epoch_operation(
           non_neg_integer(),
-          :fetch_epoch_rewards | :election_rewards
+          :fetch_epoch_rewards | :election_rewards | :fetch_validator_group_data | :fetch_voter_votes
         ) :: __MODULE__.t()
   def falsify_celo_pending_epoch_operation(block_number, operation_type) do
     celo_pending_operation = Repo.one(from(op in __MODULE__, where: op.block_number == ^block_number))

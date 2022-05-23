@@ -7,11 +7,11 @@ defmodule Indexer.Fetcher.CeloElectionRewards do
 
   require Logger
 
-  alias Explorer.Celo.{AccountReader, ContractEvents, VoterRewards}
+  alias Explorer.Celo.{AccountReader, VoterRewards}
   alias Explorer.Celo.ContractEvents.Election.ValidatorGroupVoteActivatedEvent
   alias Explorer.Celo.ContractEvents.Validators.ValidatorEpochPaymentDistributedEvent
   alias Explorer.Chain
-  alias Explorer.Chain.{Block, Hash}
+  alias Explorer.Chain.Block
   alias Explorer.Chain.CeloElectionRewards, as: CeloElectionRewardsChain
 
   alias Indexer.BufferedTask
@@ -61,7 +61,7 @@ defmodule Indexer.Fetcher.CeloElectionRewards do
         |> import_items()
       end)
 
-    if response == :ok do
+    if Enum.all?(response, &(&1 == :ok)) do
       :ok
     else
       {:retry, response}
