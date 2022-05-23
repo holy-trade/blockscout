@@ -352,9 +352,9 @@ defmodule Indexer.Fetcher.CeloElectionRewardsTest do
 
     insert(:contract_event, %{
       event: %ValidatorEpochPaymentDistributedEvent{
-        block_number: block_number,
-        contract_address_hash: contract_hash,
-        log_index: log_1.index,
+        __block_number: block_number,
+        __contract_address_hash: contract_hash,
+        __log_index: log_1.index,
         validator: validator_1_hash,
         validator_payment: 100_000,
         group: group_hash,
@@ -364,9 +364,9 @@ defmodule Indexer.Fetcher.CeloElectionRewardsTest do
 
     insert(:contract_event, %{
       event: %ValidatorEpochPaymentDistributedEvent{
-        block_number: block_number,
-        contract_address_hash: contract_hash,
-        log_index: log_2.index,
+        __block_number: block_number,
+        __contract_address_hash: contract_hash,
+        __log_index: log_2.index,
         validator: validator_2_hash,
         validator_payment: 200_000,
         group: group_hash,
@@ -404,10 +404,10 @@ defmodule Indexer.Fetcher.CeloElectionRewardsTest do
 
     insert(:contract_event, %{
       event: %ValidatorGroupVoteActivatedEvent{
-        block_number: second_to_last_block_in_epoch_number,
-        log_index: log.index,
+        __block_number: second_to_last_block_in_epoch_number,
+        __contract_address_hash: contract_hash,
+        __log_index: log.index,
         account: voter_hash,
-        contract_address_hash: contract_hash,
         group: group_hash,
         units: 10000,
         value: 650
