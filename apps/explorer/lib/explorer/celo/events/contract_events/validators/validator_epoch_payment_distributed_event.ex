@@ -24,15 +24,17 @@ defmodule Explorer.Celo.ContractEvents.Validators.ValidatorEpochPaymentDistribut
   event_param(:group_payment, {:uint, 256}, :unindexed)
 
   def get_validator_and_group_rewards_for_block(block_number) do
-    query = from(event in CeloContractEvent,
-      select: %{
-        group: json_extract_path(event.params, ["group"]),
-        group_payment: json_extract_path(event.params, ["group_payment"]),
-        validator: json_extract_path(event.params, ["validator"]),
-        validator_payment: json_extract_path(event.params, ["validator_payment"])
-      },
-      where: event.block_number == ^block_number
-    )
+    query =
+      from(event in CeloContractEvent,
+        select: %{
+          group: json_extract_path(event.params, ["group"]),
+          group_payment: json_extract_path(event.params, ["group_payment"]),
+          validator: json_extract_path(event.params, ["validator"]),
+          validator_payment: json_extract_path(event.params, ["validator_payment"])
+        },
+        where: event.block_number == ^block_number
+      )
+
     query
     |> Repo.all()
     |> Enum.map(&Map.merge(&1, %{group: Common.ca(&1.group), validator: Common.ca(&1.validator)}))
