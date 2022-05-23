@@ -5,6 +5,7 @@ defmodule Explorer.Repo.Migrations.CeloPendingEpochOperationsRemoveDeprecatedAnd
     execute("""
     DELETE FROM celo_pending_epoch_operations;
     """)
+
     alter table(:celo_pending_epoch_operations) do
       remove(:fetch_validator_group_data, :boolean, null: false)
       remove(:fetch_voter_votes, :boolean, null: false)

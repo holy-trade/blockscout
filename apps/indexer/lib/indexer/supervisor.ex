@@ -157,7 +157,7 @@ defmodule Indexer.Supervisor do
       {CeloValidatorHistory.Supervisor,
        [[json_rpc_named_arguments: json_rpc_named_arguments, memory_monitor: memory_monitor]]},
       {CeloElectionRewards.Supervisor,
-        [[json_rpc_named_arguments: json_rpc_named_arguments, memory_monitor: memory_monitor]]},
+       [[json_rpc_named_arguments: json_rpc_named_arguments, memory_monitor: memory_monitor]]},
       {CeloEpochRewards.Supervisor,
        [[json_rpc_named_arguments: json_rpc_named_arguments, memory_monitor: memory_monitor]]},
       {CeloUnlocked.Supervisor, [[json_rpc_named_arguments: json_rpc_named_arguments, memory_monitor: memory_monitor]]},
