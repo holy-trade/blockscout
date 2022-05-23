@@ -2838,25 +2838,9 @@ defmodule Explorer.Chain do
     query =
       from(
         b in Block,
-        join: celo_pending_ops in assoc(b, :celo_pending_epoch_operations),
+        join: celo_pending_ops in Chain.CeloPendingEpochOperation,
+        on: b.number == celo_pending_ops.block_number,
         where: celo_pending_ops.fetch_epoch_rewards,
-        select: %{block_number: b.number, block_hash: b.hash}
-      )
-
-    Repo.stream_reduce(query, initial, reducer)
-  end
-
-  @spec stream_blocks_with_unfetched_validator_group_data(
-          initial :: accumulator,
-          reducer :: (entry :: term(), accumulator -> accumulator)
-        ) :: {:ok, accumulator}
-        when accumulator: term()
-  def stream_blocks_with_unfetched_validator_group_data(initial, reducer) when is_function(reducer, 2) do
-    query =
-      from(
-        b in Block,
-        join: celo_pending_ops in assoc(b, :celo_pending_epoch_operations),
-        where: celo_pending_ops.fetch_validator_group_data,
         select: %{block_number: b.number, block_hash: b.hash}
       )
 
