@@ -90,6 +90,7 @@ defmodule Indexer.Fetcher.CeloElectionRewardsTest do
       argument = %{
         voter_rewards: "does not matter"
       }
+
       assert CeloElectionRewardsFetcher.get_voter_rewards(argument) == argument
     end
   end
@@ -218,6 +219,7 @@ defmodule Indexer.Fetcher.CeloElectionRewardsTest do
         group_rewards: "does not",
         validator_rewards: "matter"
       }
+
       assert CeloElectionRewardsFetcher.get_validator_and_group_rewards(argument) == argument
     end
   end
@@ -342,8 +344,7 @@ defmodule Indexer.Fetcher.CeloElectionRewardsTest do
     %Address{hash: group_hash} = insert(:address)
     %Explorer.Chain.CeloCoreContract{address_hash: contract_hash} = insert(:core_contract)
 
-    %Block{number: block_number, timestamp: block_timestamp} =
-      block = insert(:block, number: 10_679_040)
+    %Block{number: block_number, timestamp: block_timestamp} = block = insert(:block, number: 10_679_040)
 
     log_1 = insert(:log, block: block, index: 1)
     log_2 = insert(:log, block: block, index: 2)
@@ -383,7 +384,10 @@ defmodule Indexer.Fetcher.CeloElectionRewardsTest do
   end
 
   defp save_voter_contract_events_and_start_fetcher(context) do
-    pid = CeloElectionRewardsFetcher.Supervisor.Case.start_supervised!(json_rpc_named_arguments: context.json_rpc_named_arguments)
+    pid =
+      CeloElectionRewardsFetcher.Supervisor.Case.start_supervised!(
+        json_rpc_named_arguments: context.json_rpc_named_arguments
+      )
 
     %Address{hash: voter_hash} = insert(:address)
     %Address{hash: group_hash} = insert(:address)

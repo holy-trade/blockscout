@@ -1,4 +1,4 @@
-defmodule Explorer.Repo.Migrations.AddCeloVoterVotes do
+defmodule Explorer.Repo.Migrations.AddCeloElectionRewards do
   use Ecto.Migration
 
   def change do

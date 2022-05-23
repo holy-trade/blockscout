@@ -96,15 +96,18 @@ defmodule Explorer.Celo.VoterRewards do
           group_hash: Address
         }) :: integer()
   def subtract_activated_add_revoked(entry) do
-    from(event in CeloContractEvent,
-      select:
-        fragment(
-          "SUM(CAST(params->>'value' AS numeric) * CASE name WHEN ? THEN -1 ELSE 1 END)",
-          ^"ValidatorGroupVoteActivated"
-        ),
-      where: event.name in ["ValidatorGroupVoteActivated", "ValidatorGroupActiveVoteRevoked"],
-      where: event.block_number == ^entry.block_number
-    )
+    query =
+      from(event in CeloContractEvent,
+        select:
+          fragment(
+            "SUM(CAST(params->>'value' AS numeric) * CASE name WHEN ? THEN -1 ELSE 1 END)",
+            ^"ValidatorGroupVoteActivated"
+          ),
+        where: event.name in ["ValidatorGroupVoteActivated", "ValidatorGroupActiveVoteRevoked"],
+        where: event.block_number == ^entry.block_number
+      )
+
+    query
     |> CeloContractEvent.query_by_voter_param(entry.account_hash)
     |> CeloContractEvent.query_by_group_param(entry.group_hash)
     |> Repo.one()

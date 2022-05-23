@@ -5,7 +5,7 @@ defmodule Explorer.Chain.CeloPendingEpochOperation do
 
   use Explorer.Schema
 
-  alias Explorer.Chain.{Block}
+  alias Explorer.Chain.Block
   alias Explorer.Repo
 
   import Ecto.Query,

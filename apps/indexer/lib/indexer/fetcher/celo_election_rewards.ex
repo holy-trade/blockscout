@@ -8,12 +8,11 @@ defmodule Indexer.Fetcher.CeloElectionRewards do
   require Logger
 
   alias Explorer.Celo.{AccountReader, ContractEvents, VoterRewards}
+  alias Explorer.Celo.ContractEvents.Election.ValidatorGroupVoteActivatedEvent
+  alias Explorer.Celo.ContractEvents.Validators.ValidatorEpochPaymentDistributedEvent
   alias Explorer.Chain
   alias Explorer.Chain.{Block, Hash}
   alias Explorer.Chain.CeloElectionRewards, as: CeloElectionRewardsChain
-
-  alias ContractEvents.Election.ValidatorGroupVoteActivatedEvent
-  alias ContractEvents.Validators.ValidatorEpochPaymentDistributedEvent
 
   alias Indexer.BufferedTask
   alias Indexer.Fetcher.Util
@@ -102,7 +101,7 @@ defmodule Indexer.Fetcher.CeloElectionRewards do
     %{block_number: block_number, block_timestamp: block_timestamp, voter_rewards: voter_rewards}
   end
 
-  def calculate_voter_rewards(after_rewards_votes, before_rewards_votes, _votes_plus_revoked_minus_activated = nil),
+  def calculate_voter_rewards(after_rewards_votes, before_rewards_votes, nil = _votes_plus_revoked_minus_activated),
     do: after_rewards_votes - before_rewards_votes
 
   def calculate_voter_rewards(after_rewards_votes, before_rewards_votes, plus_revoked_minus_activated_votes),
@@ -158,8 +157,14 @@ defmodule Indexer.Fetcher.CeloElectionRewards do
   end
 
   def import_items(block_with_rewards) do
+    reward_types_present_for_block =
+      MapSet.intersection(
+        MapSet.new(Map.keys(block_with_rewards)),
+        MapSet.new([:voter_rewards, :validator_rewards, :group_rewards])
+      )
+
     block_with_changes =
-      MapSet.intersection(MapSet.new(Map.keys(block_with_rewards)), MapSet.new([:voter_rewards, :validator_rewardsm, :group_rewards]))
+      reward_types_present_for_block
       |> Enum.reduce(block_with_rewards, fn type, block_with_rewards ->
         case changeset(Map.get(block_with_rewards, type)) do
           {:ok, changes} -> Map.put(block_with_rewards, type, changes)
@@ -190,7 +195,8 @@ defmodule Indexer.Fetcher.CeloElectionRewards do
   end
 
   defp log_changeset_error(changeset) when not changeset.valid? do
-    Logger.error(fn -> "Election rewards changeset errors. Block #{inspect(changeset.changes.block_number)} requeued." end,
+    Logger.error(
+      fn -> "Election rewards changeset errors. Block #{inspect(changeset.changes.block_number)} requeued." end,
       errors: changeset.errors
     )
   end
