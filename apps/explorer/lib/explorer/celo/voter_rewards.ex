@@ -90,6 +90,9 @@ defmodule Explorer.Celo.VoterRewards do
     %{from: from_date, to: to_date, rewards: rewards, total_reward_celo: rewards_sum}
   end
 
+  # The way we calculate voter rewards is by subtracting the previous epoch's last block's votes count from the current
+  # epoch's first block's votes count. If the user activated or revoked votes in the previous epoch's last block, we
+  # need to take that into consideration, namely subtract any activated and add any revoked votes.
   def subtract_activated_add_revoked(entry) do
     query =
       from(event in CeloContractEvent,
