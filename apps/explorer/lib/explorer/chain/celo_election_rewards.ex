@@ -8,6 +8,7 @@ defmodule Explorer.Chain.CeloElectionRewards do
   import Ecto.Query,
     only: [
       from: 2,
+      subquery: 1,
       where: 3
     ]
 
@@ -84,21 +85,41 @@ defmodule Explorer.Chain.CeloElectionRewards do
     )
   end
 
-  def get_rewards(account_hash_list, reward_type_list) do
-    query = base_query(account_hash_list, reward_type_list)
-    query |> Repo.all()
-  end
+  def get_rewards(account_hash_list, reward_type_list, from, to) when from == nil and to == nil,
+    do: get_rewards(account_hash_list, reward_type_list, ~U[2020-04-22 16:00:00.000000Z], DateTime.utc_now())
 
-  def get_voter_rewards_for_group(voter_hash, group_hash) do
-    base_query = base_query([voter_hash], ["voter"])
-    rewards =
-      base_query
-      |> where([rewards], rewards.associated_account_hash == ^group_hash)
-      |> Repo.all()
+  def get_rewards(account_hash_list, reward_type_list, from, to) when from == nil,
+    do: get_rewards(account_hash_list, reward_type_list, ~U[2020-04-22 16:00:00.000000Z], to)
 
-    total_amount_query = from(rewards in __MODULE__, select: sum(rewards.amount))
+  def get_rewards(account_hash_list, reward_type_list, from, to) when to == nil,
+    do: get_rewards(account_hash_list, reward_type_list, from, DateTime.utc_now())
+
+  def get_rewards(
+        account_hash_list,
+        reward_type_list,
+        from,
+        to
+      ) do
+    query_for_all_time = base_query(account_hash_list, reward_type_list)
+    query_for_time_frame = query_for_all_time |> where([rewards], fragment("? BETWEEN ? AND ?", rewards.block_timestamp, ^from, ^to))
+
+    rewards = query_for_time_frame |> Repo.all()
+
+    total_amount_query = from(rewards in subquery(query_for_all_time), select: sum(rewards.amount))
     total_amount = total_amount_query |> Repo.one()
 
-    %{rewards: rewards, total: total_amount}
+    %{rewards: rewards, total_reward_celo: total_amount, from: from, to: to}
+  end
+
+  def get_voter_rewards_for_group(voter_hash_list, group_hash_list) do
+    base_query = base_query(voter_hash_list, ["voter"])
+
+    rewards =
+      base_query
+      |> where([rewards], rewards.associated_account_hash in ^group_hash_list)
+      |> Repo.all()
+
+    {:ok, zero_wei} = Wei.cast(0)
+    %{rewards: rewards, total: Enum.reduce(rewards, zero_wei, fn curr, acc -> Wei.sum(curr.amount, acc) end)}
   end
 end

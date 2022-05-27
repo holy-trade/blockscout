@@ -102,13 +102,12 @@ defmodule BlockScoutWeb.API.RPC.RewardView do
 
   defp prepare_generic_reward_multiple_accounts(reward) do
     %{
-      account: to_string(reward.account),
+      account: to_string(reward.account_hash),
       amount: to_string(reward.amount),
-      blockHash: to_string(reward.block_hash),
       blockNumber: to_string(reward.block_number),
       date: reward.date,
       epochNumber: to_string(reward.epoch_number),
-      group: to_string(reward.group)
+      group: to_string(reward.associated_account_hash)
     }
   end
 
