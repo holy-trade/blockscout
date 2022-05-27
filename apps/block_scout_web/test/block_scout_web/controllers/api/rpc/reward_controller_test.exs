@@ -1,7 +1,10 @@
 defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
   use BlockScoutWeb.ConnCase
 
+  import Explorer.Factory
+
   alias Explorer.{SetupValidatorAndGroupRewardsTest, SetupVoterRewardsTest}
+  alias Explorer.Chain.{Address, Block}
 
   describe "getvoterrewardsforgroup" do
     test "with missing voter address", %{conn: conn} do
@@ -98,47 +101,46 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
     end
 
     test "with valid voter and group address", %{conn: conn} do
-      {
-        voter_hash,
-        group_hash,
-        block_2_hash,
-        block_3_hash,
-        block_5_hash,
-        block_7_hash
-      } = SetupVoterRewardsTest.setup_for_group()
+      %Address{hash: account_hash} = insert(:address)
+      %Address{hash: group_hash} = insert(:address)
+      insert(:celo_account, address: group_hash)
+      %Block{number: block_1_number, timestamp: block_1_timestamp} = insert(:block, number: 17_280, timestamp: ~U[2022-01-01T17:42:43.162804Z])
+      %Block{number: block_2_number, timestamp: block_2_timestamp} = insert(:block, number: 17_280 * 2, timestamp: ~U[2022-01-02T17:42:43.162804Z])
+
+      insert(
+        :celo_election_rewards,
+        account_hash: account_hash,
+        amount: 80,
+        associated_account_hash: group_hash,
+        block_number: block_1_number,
+        block_timestamp: block_1_timestamp
+      )
+
+      insert(
+        :celo_election_rewards,
+        account_hash: account_hash,
+        amount: 20,
+        associated_account_hash: group_hash,
+        block_number: block_2_number,
+        block_timestamp: block_2_timestamp
+      )
 
       expected_result = %{
         "rewards" => [
           %{
             "amount" => "80",
-            "blockHash" => to_string(block_2_hash),
-            "blockNumber" => "10696320",
+            "blockNumber" => "17280",
             "date" => "2022-01-01T17:42:43.162804Z",
-            "epochNumber" => "619"
+            "epochNumber" => "1"
           },
           %{
             "amount" => "20",
-            "blockHash" => to_string(block_3_hash),
-            "blockNumber" => "10713600",
+            "blockNumber" => "34560",
             "date" => "2022-01-02T17:42:43.162804Z",
-            "epochNumber" => "620"
-          },
-          %{
-            "amount" => "75",
-            "blockHash" => to_string(block_5_hash),
-            "blockNumber" => "10730880",
-            "date" => "2022-01-03T17:42:43.162804Z",
-            "epochNumber" => "621"
-          },
-          %{
-            "amount" => "0",
-            "blockHash" => to_string(block_7_hash),
-            "blockNumber" => "10748160",
-            "date" => "2022-01-04T17:42:43.162804Z",
-            "epochNumber" => "622"
+            "epochNumber" => "2"
           }
         ],
-        "total" => "175"
+        "total" => "100"
       }
 
       response =
@@ -146,7 +148,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
         |> get("/api", %{
           "module" => "reward",
           "action" => "getvoterrewardsforgroup",
-          "voterAddress" => to_string(voter_hash),
+          "voterAddress" => to_string(account_hash),
           "groupAddress" => to_string(group_hash)
         })
         |> json_response(200)

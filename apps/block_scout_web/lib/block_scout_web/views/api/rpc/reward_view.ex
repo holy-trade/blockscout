@@ -45,7 +45,6 @@ defmodule BlockScoutWeb.API.RPC.RewardView do
   defp prepare_reward_for_group(reward) do
     %{
       amount: to_string(reward.amount),
-      blockHash: to_string(reward.block_hash),
       blockNumber: to_string(reward.block_number),
       date: reward.date,
       epochNumber: to_string(reward.epoch_number)

@@ -5,7 +5,13 @@ defmodule Explorer.Chain.CeloElectionRewards do
 
   use Explorer.Schema
 
-  alias Explorer.Chain.{Block, Hash, Wei}
+  import Ecto.Query,
+    only: [
+      from: 2,
+      where: 3
+    ]
+
+  alias Explorer.Chain.{Hash, Wei}
   alias Explorer.Repo
 
   @required_attrs ~w(account_hash amount associated_account_hash block_number block_timestamp reward_type)a
@@ -60,5 +66,39 @@ defmodule Explorer.Chain.CeloElectionRewards do
       [:account_hash, :block_number, :reward_type],
       name: :celo_election_rewards_account_hash_block_number_reward_type
     )
+  end
+
+  def base_query(account_hash_list, reward_type_list) do
+    from(rewards in __MODULE__,
+      select: %{
+        account_hash: rewards.account_hash,
+        amount: rewards.amount,
+        associated_account_hash: rewards.associated_account_hash,
+        block_number: rewards.block_number,
+        date: rewards.block_timestamp,
+        epoch_number: fragment("? / 17280", rewards.block_number),
+        reward_type: rewards.reward_type
+      },
+      where: rewards.account_hash in ^account_hash_list,
+      where: rewards.reward_type in ^reward_type_list
+    )
+  end
+
+  def get_rewards(account_hash_list, reward_type_list) do
+    query = base_query(account_hash_list, reward_type_list)
+    query |> Repo.all()
+  end
+
+  def get_voter_rewards_for_group(voter_hash, group_hash) do
+    base_query = base_query([voter_hash], ["voter"])
+    rewards =
+      base_query
+      |> where([rewards], rewards.associated_account_hash == ^group_hash)
+      |> Repo.all()
+
+    total_amount_query = from(rewards in __MODULE__, select: sum(rewards.amount))
+    total_amount = total_amount_query |> Repo.one()
+
+    %{rewards: rewards, total: total_amount}
   end
 end
