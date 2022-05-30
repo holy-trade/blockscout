@@ -57,7 +57,7 @@ defmodule Explorer.Chain.CeloElectionRewards do
     |> validate_required(@required_attrs)
     |> foreign_key_constraint(:account_hash)
     |> unique_constraint(
-      [:account_hash, :block_number, :reward_type],
+      [:account_hash, :reward_type, :block_number, :associated_account_hash],
       name: :celo_election_rewards_account_hash_block_number_reward_type
     )
   end

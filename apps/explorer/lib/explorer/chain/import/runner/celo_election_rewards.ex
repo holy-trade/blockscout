@@ -75,7 +75,7 @@ defmodule Explorer.Chain.Import.Runner.CeloElectionRewards do
       Import.insert_changes_list(
         repo,
         uniq_changes_list,
-        conflict_target: [:account_hash, :block_number, :reward_type],
+        conflict_target: [:account_hash, :reward_type, :block_number, :associated_account_hash],
         on_conflict: on_conflict,
         for: CeloElectionRewardsChain,
         returning: true,
