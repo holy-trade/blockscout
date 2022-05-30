@@ -68,10 +68,10 @@ defmodule BlockScoutWeb.API.RPC.RewardController do
 
   def getvalidatorgrouprewards(conn, params) do
     with {:group_address_param, {:ok, group_address_param}} <- fetch_address(params, "groupAddress"),
-         {:group_format, {:ok, group_address_hash_or_hash_list}} <- to_address_hash_list(group_address_param, :group_format),
+         {:group_format, {:ok, group_hash_list}} <- to_address_hash_list(group_address_param, :group_format),
          {:date_param, {:ok, from, _}} <- fetch_date(params["from"]),
          {:date_param, {:ok, to, _}} <- fetch_date(params["to"]),
-         rewards <- call_calculate(ValidatorGroupRewards, group_address_hash_or_hash_list, from, to) do
+         rewards <- CeloElectionRewards.get_rewards(group_hash_list, ["group"], from, to) do
       render(conn, :getvalidatorgrouprewards, rewards: rewards)
     else
       {:group_address_param, :error} ->
