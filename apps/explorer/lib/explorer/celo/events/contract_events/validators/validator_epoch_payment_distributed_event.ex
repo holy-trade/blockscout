@@ -32,7 +32,8 @@ defmodule Explorer.Celo.ContractEvents.Validators.ValidatorEpochPaymentDistribut
           validator: json_extract_path(event.params, ["validator"]),
           validator_payment: json_extract_path(event.params, ["validator_payment"])
         },
-        where: event.block_number == ^block_number
+        where: event.block_number == ^block_number,
+        where: event.name == "ValidatorEpochPaymentDistributed"
       )
 
     query
