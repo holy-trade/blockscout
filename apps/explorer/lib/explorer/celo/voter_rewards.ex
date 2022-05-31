@@ -109,6 +109,9 @@ defmodule Explorer.Celo.VoterRewards do
     |> CeloContractEvent.query_by_voter_param(entry.account_hash)
     |> CeloContractEvent.query_by_group_param(entry.group_hash)
     |> Repo.one()
-    |> Decimal.to_integer()
+    |> to_integer_if_not_nil()
   end
+
+  defp to_integer_if_not_nil(nil), do: 0
+  defp to_integer_if_not_nil(activated_or_revoked), do: Decimal.to_integer(activated_or_revoked)
 end

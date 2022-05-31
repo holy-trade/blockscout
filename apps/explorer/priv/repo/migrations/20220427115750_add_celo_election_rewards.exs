@@ -13,6 +13,6 @@ defmodule Explorer.Repo.Migrations.AddCeloElectionRewards do
       timestamps(null: false, type: :utc_datetime_usec)
     end
 
-    create(unique_index(:celo_election_rewards, [:account_hash, :block_number, :reward_type]))
+    create(unique_index(:celo_election_rewards, [:account_hash, :reward_type, :block_number, :associated_account_hash]))
   end
 end
