@@ -33,27 +33,38 @@ defmodule Explorer.Chain.CeloElectionRewardsTest do
       )
 
       {:ok, one_wei} = Wei.cast(1)
+      {:ok, two_wei} = Wei.cast(2)
 
-      assert CeloElectionRewards.get_rewards([account_hash], ["voter", "validator"], nil, nil) == [
-               %{
-                 account_hash: account_hash,
-                 amount: one_wei,
-                 associated_account_hash: group_hash,
-                 block_number: block_number,
-                 date: block_timestamp,
-                 epoch_number: 1,
-                 reward_type: "validator"
-               },
-               %{
-                 account_hash: account_hash,
-                 amount: one_wei,
-                 associated_account_hash: group_hash,
-                 block_number: block_number,
-                 date: block_timestamp,
-                 epoch_number: 1,
-                 reward_type: "voter"
-               }
-             ]
+      expected_rewards = [
+        %{
+          account_hash: account_hash,
+          amount: one_wei,
+          associated_account_hash: group_hash,
+          block_number: block_number,
+          date: block_timestamp,
+          epoch_number: 1,
+          reward_type: "validator"
+        },
+        %{
+          account_hash: account_hash,
+          amount: one_wei,
+          associated_account_hash: group_hash,
+          block_number: block_number,
+          date: block_timestamp,
+          epoch_number: 1,
+          reward_type: "voter"
+        }
+      ]
+
+      from = DateTime.add(DateTime.now!("Etc/UTC"), -10)
+      to = DateTime.add(DateTime.now!("Etc/UTC"), 10)
+
+      assert CeloElectionRewards.get_rewards([account_hash], ["voter", "validator"], from, to) == %{
+               rewards: expected_rewards,
+               total_reward_celo: two_wei,
+               from: from,
+               to: to
+             }
     end
 
     test "returns rewards for a voter for given time frame" do
@@ -95,23 +106,29 @@ defmodule Explorer.Chain.CeloElectionRewardsTest do
       )
 
       {:ok, one_wei} = Wei.cast(1)
+      {:ok, three_wei} = Wei.cast(3)
+
+      expected_rewards = [
+        %{
+          account_hash: account_hash,
+          amount: one_wei,
+          associated_account_hash: group_hash,
+          block_number: block_2_number,
+          date: block_2_timestamp,
+          epoch_number: 2,
+          reward_type: "voter"
+        }
+      ]
+
+      from = ~U[2021-04-21 00:00:00.000000Z]
+      to = ~U[2021-04-22 00:00:00.000000Z]
 
       assert CeloElectionRewards.get_rewards(
                [account_hash],
                ["voter", "validator"],
-               ~U[2021-04-21 00:00:00.000000Z],
-               ~U[2021-04-22 00:00:00.000000Z]
-             ) == [
-               %{
-                 account_hash: account_hash,
-                 amount: one_wei,
-                 associated_account_hash: group_hash,
-                 block_number: block_2_number,
-                 date: block_2_timestamp,
-                 epoch_number: 2,
-                 reward_type: "voter"
-               }
-             ]
+               from,
+               to
+             ) == %{from: from, to: to, rewards: expected_rewards, total_reward_celo: three_wei}
     end
   end
 end
