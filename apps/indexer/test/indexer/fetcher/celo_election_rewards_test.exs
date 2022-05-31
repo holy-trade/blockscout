@@ -9,7 +9,7 @@ defmodule Indexer.Fetcher.CeloElectionRewardsTest do
 
   alias Explorer.Celo.ContractEvents.Election.ValidatorGroupVoteActivatedEvent
   alias Explorer.Celo.ContractEvents.Validators.ValidatorEpochPaymentDistributedEvent
-  alias Explorer.Chain.{Address, Block, CeloElectionRewards}
+  alias Explorer.Chain.{Address, Block, CeloElectionRewards, Wei}
   alias Indexer.Fetcher.CeloElectionRewards, as: CeloElectionRewardsFetcher
 
   @moduletag :capture_log
@@ -49,7 +49,10 @@ defmodule Indexer.Fetcher.CeloElectionRewardsTest do
       wait_for_results(fn ->
         reward = Repo.one!(from(rewards in CeloElectionRewards))
 
+        {:ok, amount_in_wei} = Wei.cast(4_503_599_627_369_846)
         assert reward.reward_type == "voter"
+        assert reward.block_number == context.last_block_in_epoch_number
+        assert reward.amount == amount_in_wei
       end)
 
       # Terminates the process so it finishes all Ecto processes.
