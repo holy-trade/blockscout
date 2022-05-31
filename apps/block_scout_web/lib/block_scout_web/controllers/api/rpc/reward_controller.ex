@@ -1,7 +1,6 @@
 defmodule BlockScoutWeb.API.RPC.RewardController do
   use BlockScoutWeb, :controller
 
-  alias Explorer.Celo.{ValidatorGroupRewards, ValidatorRewards}
   alias Explorer.Chain
   alias Explorer.Chain.CeloElectionRewards
 
@@ -123,13 +122,5 @@ defmodule BlockScoutWeb.API.RPC.RewardController do
       nil -> {:date_param, {:ok, nil, nil}}
       date -> {:date_param, DateTime.from_iso8601(date)}
     end
-  end
-
-  defp call_calculate(module, address_hash_or_hash_list, from, to) when is_list(address_hash_or_hash_list) do
-    module.calculate_multiple_accounts(address_hash_or_hash_list, from, to)
-  end
-
-  defp call_calculate(module, address_hash_or_hash_list, from, to) do
-    module.calculate(address_hash_or_hash_list, from, to)
   end
 end

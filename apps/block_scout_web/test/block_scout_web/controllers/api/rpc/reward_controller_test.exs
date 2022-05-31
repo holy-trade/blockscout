@@ -80,7 +80,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
     test "with an address that doesn't exist", %{conn: conn} do
       expected_result = %{
         "rewards" => [],
-        "total" => ""
+        "total" => "0"
       }
 
       response =
@@ -282,7 +282,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
             "group" => to_string(group_hash)
           }
         ],
-        "totalRewardCelo" => "80",
+        "totalRewardCelo" => "100",
         "from" => "2022-01-03 00:00:00.000000Z",
         "to" => "2022-01-06 00:00:00.000000Z"
       }
@@ -331,7 +331,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
         })
         |> json_response(200)
 
-      assert response["message"] =~ "Invalid validator address hash"
+      assert response["message"] =~ "One or more validator addresses are invalid"
       assert response["status"] == "0"
       assert Map.has_key?(response, "result")
       refute response["result"]
@@ -360,10 +360,9 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
     test "with an address that doesn't exist", %{conn: conn} do
       expected_result = %{
         "rewards" => [],
-        "totalRewardCelo" => "0",
+        "totalRewardCelo" => "",
         "from" => "2022-01-03 00:00:00.000000Z",
-        "to" => "2022-01-06 00:00:00.000000Z",
-        "account" => "0x8bf38d4764929064f2d4d3a56520a76ab3df415b"
+        "to" => "2022-01-06 00:00:00.000000Z"
       }
 
       response =
@@ -481,7 +480,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
         })
         |> json_response(200)
 
-      assert response["message"] =~ "Invalid group address hash"
+      assert response["message"] =~ "One or more group addresses are invalid"
       assert response["status"] == "0"
       assert Map.has_key?(response, "result")
       refute response["result"]
@@ -510,10 +509,9 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
     test "with an address that doesn't exist", %{conn: conn} do
       expected_result = %{
         "rewards" => [],
-        "totalRewardCelo" => "0",
+        "totalRewardCelo" => "",
         "from" => "2022-01-03 00:00:00.000000Z",
-        "to" => "2022-01-06 00:00:00.000000Z",
-        "group" => "0x8bf38d4764929064f2d4d3a56520a76ab3df415b"
+        "to" => "2022-01-06 00:00:00.000000Z"
       }
 
       response =
@@ -547,8 +545,8 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
       insert(
         :celo_election_rewards,
         account_hash: group_hash,
-        amount: 150000,
-        associated_account_hash: validator_2_hash,
+        amount: 300000,
+        associated_account_hash: validator_1_hash,
         block_number: block_number,
         block_timestamp: block_timestamp,
         reward_type: "group"
@@ -557,7 +555,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
       insert(
         :celo_election_rewards,
         account_hash: group_hash,
-        amount: 100000,
+        amount: 400000,
         associated_account_hash: validator_2_hash,
         block_number: block_number,
         block_timestamp: block_timestamp,
@@ -571,6 +569,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
             "date" => "2022-01-05T17:42:43.162804Z",
             "blockNumber" => "17280",
             "epochNumber" => "1",
+            "group" => to_string(group_hash),
             "validator" => to_string(validator_1_hash)
           },
           %{
@@ -578,13 +577,13 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
             "date" => "2022-01-05T17:42:43.162804Z",
             "blockNumber" => "17280",
             "epochNumber" => "1",
-            "validator" => to_string(validator_1_hash)
+            "group" => to_string(group_hash),
+            "validator" => to_string(validator_2_hash)
           }
         ],
         "totalRewardCelo" => "700000",
         "from" => "2022-01-03 00:00:00.000000Z",
         "to" => "2022-01-06 00:00:00.000000Z",
-        "group" => to_string(group_hash)
       }
 
       response =
