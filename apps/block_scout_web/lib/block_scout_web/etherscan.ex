@@ -738,7 +738,7 @@ defmodule BlockScoutWeb.Etherscan do
       ],
       "totalRewardCelo" => "300",
       "from" => "2022-01-03 00:00:00.000000Z",
-      "to" => "2022-01-06 00:00:00.000000Z",
+      "to" => "2022-01-06 00:00:00.000000Z"
     }
   }
 
@@ -768,7 +768,7 @@ defmodule BlockScoutWeb.Etherscan do
       ],
       "totalRewardCelo" => "300000",
       "from" => "2022-01-03 00:00:00.000000Z",
-      "to" => "2022-01-06 00:00:00.000000Z",
+      "to" => "2022-01-06 00:00:00.000000Z"
     }
   }
 
@@ -798,7 +798,7 @@ defmodule BlockScoutWeb.Etherscan do
       ],
       "totalRewardCelo" => "300",
       "from" => "2022-01-03 00:00:00.000000Z",
-      "to" => "2022-01-06 00:00:00.000000Z",
+      "to" => "2022-01-06 00:00:00.000000Z"
     }
   }
 

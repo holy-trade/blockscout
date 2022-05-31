@@ -101,7 +101,9 @@ defmodule Explorer.Chain.CeloElectionRewards do
         to
       ) do
     query_for_all_time = base_query(account_hash_list, reward_type_list)
-    query_for_time_frame = query_for_all_time |> where([rewards], fragment("? BETWEEN ? AND ?", rewards.block_timestamp, ^from, ^to))
+
+    query_for_time_frame =
+      query_for_all_time |> where([rewards], fragment("? BETWEEN ? AND ?", rewards.block_timestamp, ^from, ^to))
 
     rewards = query_for_time_frame |> Repo.all()
 

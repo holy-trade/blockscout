@@ -395,7 +395,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
       insert(
         :celo_election_rewards,
         account_hash: validator_1_hash,
-        amount: 150000,
+        amount: 150_000,
         associated_account_hash: group_hash,
         block_number: block_number,
         block_timestamp: block_timestamp,
@@ -405,7 +405,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
       insert(
         :celo_election_rewards,
         account_hash: validator_2_hash,
-        amount: 100000,
+        amount: 100_000,
         associated_account_hash: group_hash,
         block_number: block_number,
         block_timestamp: block_timestamp,
@@ -545,7 +545,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
       insert(
         :celo_election_rewards,
         account_hash: group_hash,
-        amount: 300000,
+        amount: 300_000,
         associated_account_hash: validator_1_hash,
         block_number: block_number,
         block_timestamp: block_timestamp,
@@ -555,7 +555,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
       insert(
         :celo_election_rewards,
         account_hash: group_hash,
-        amount: 400000,
+        amount: 400_000,
         associated_account_hash: validator_2_hash,
         block_number: block_number,
         block_timestamp: block_timestamp,
@@ -583,7 +583,7 @@ defmodule BlockScoutWeb.API.RPC.RewardControllerTest do
         ],
         "totalRewardCelo" => "700000",
         "from" => "2022-01-03 00:00:00.000000Z",
-        "to" => "2022-01-06 00:00:00.000000Z",
+        "to" => "2022-01-06 00:00:00.000000Z"
       }
 
       response =
