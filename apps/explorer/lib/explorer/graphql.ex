@@ -372,7 +372,9 @@ defmodule Explorer.GraphQL do
         token: token.symbol,
         token_address: token.contract_address_hash,
         nonce: tx.nonce,
-        block_number: tt.block_number
+        block_number: tt.block_number,
+        token_id: tt.token_id,
+        token_type: token.type
       },
       order_by: [desc: tt.block_number, desc: tt.amount, desc: tt.log_index]
     )
