@@ -239,7 +239,7 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
     |> where([_votes, block], block.timestamp < ^to_date)
   end
 
-  defp adjust_rewards_and_rewards_sum(from_date, rewards, rewards_sum, params) do
+  defp adjust_rewards_and_rewards_sum(from_date, rewards, rewards_sum, _params) do
     if from_date == ~U[2020-04-22 16:00:00.000000Z] do
       {rewards, rewards_sum}
     else

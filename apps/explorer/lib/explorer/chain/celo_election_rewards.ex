@@ -8,11 +8,13 @@ defmodule Explorer.Chain.CeloElectionRewards do
   import Ecto.Query,
     only: [
       from: 2,
+      limit: 2,
+      offset: 2,
       subquery: 1,
       where: 3
     ]
 
-  alias Explorer.Chain.{Hash, Wei}
+  alias Explorer.Chain.{CeloAccount, Hash, Wei}
   alias Explorer.Repo
 
   @required_attrs ~w(account_hash amount associated_account_hash block_number block_timestamp reward_type)a
@@ -51,7 +53,7 @@ defmodule Explorer.Chain.CeloElectionRewards do
       type: Hash.Address
     )
 
-    belongs_to(:celo_account, Explorer.Chain.Address,
+    belongs_to(:celo_account, Explorer.Chain.CeloAccount,
       foreign_key: :associated_account_hash,
       references: :address,
       type: Hash.Address
@@ -70,16 +72,21 @@ defmodule Explorer.Chain.CeloElectionRewards do
   end
 
   def base_query(account_hash_list, reward_type_list) do
+    {:ok, zero_wei} = Wei.cast(0)
     from(rewards in __MODULE__,
+      join: acc in CeloAccount,
+      on: rewards.associated_account_hash == acc.address,
       select: %{
         account_hash: rewards.account_hash,
         amount: rewards.amount,
-        associated_account_hash: rewards.associated_account_hash,
+        associated_account_name: acc.name,
         block_number: rewards.block_number,
         date: rewards.block_timestamp,
         epoch_number: fragment("? / 17280", rewards.block_number),
         reward_type: rewards.reward_type
       },
+      order_by: [desc: rewards.block_number, asc: rewards.reward_type],
+      where: rewards.amount != ^zero_wei,
       where: rewards.account_hash in ^account_hash_list,
       where: rewards.reward_type in ^reward_type_list
     )
@@ -113,6 +120,15 @@ defmodule Explorer.Chain.CeloElectionRewards do
     %{rewards: rewards, total_reward_celo: total_amount, from: from, to: to}
   end
 
+  def get_paginated_rewards(account_hash_list, reward_type_list, pagination_params) do
+    {items_count, _} = Map.get(pagination_params, "items_count", "0") |> Integer.parse()
+    page_size = Map.get(pagination_params, "page_size")
+
+    query = base_query(account_hash_list, reward_type_list)
+
+    query |> limit(^page_size) |> offset(^items_count) |> Repo.all()
+  end
+
   def get_voter_rewards_for_group(voter_hash_list, group_hash_list) do
     base_query = base_query(voter_hash_list, ["voter"])
 
@@ -123,5 +139,31 @@ defmodule Explorer.Chain.CeloElectionRewards do
 
     {:ok, zero_wei} = Wei.cast(0)
     %{rewards: rewards, total: Enum.reduce(rewards, zero_wei, fn curr, acc -> Wei.sum(curr.amount, acc) end)}
+  end
+
+  def sum_query(account_hash) do
+    from(reward in __MODULE__, select: sum(reward.amount), where: reward.account_hash == ^account_hash)
+  end
+
+  def get_rewards_sum_for_account(account_hash) do
+    query = sum_query(account_hash)
+
+    Repo.one!(query)
+  end
+
+  def get_rewards_sums_for_account(account_hash, type) do
+    sum_query = sum_query(account_hash)
+
+    voting_sum =
+      sum_query
+      |> where([reward], reward.reward_type == "voter")
+      |> Repo.one!()
+
+    other_sum =
+      sum_query
+      |> where([reward], reward.reward_type == ^type)
+      |> Repo.one!()
+
+    {other_sum, voting_sum}
   end
 end

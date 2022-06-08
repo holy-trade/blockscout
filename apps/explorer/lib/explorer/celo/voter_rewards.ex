@@ -18,7 +18,6 @@ defmodule Explorer.Celo.VoterRewards do
 
   alias Explorer.Celo.ContractEvents
   alias Explorer.Chain.CeloContractEvent
-  alias Explorer.Chain.Hash.Address
   alias Explorer.Repo
 
   alias ContractEvents.{Election, EventMap}

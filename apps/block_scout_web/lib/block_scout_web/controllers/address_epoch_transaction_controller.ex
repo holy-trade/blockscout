@@ -8,9 +8,8 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
   import BlockScoutWeb.Chain, only: [paging_options: 1, next_page_params: 3, split_list_by_page: 1]
 
   alias BlockScoutWeb.{AccessHelpers, Controller, EpochTransactionView}
-  alias Explorer.Celo.{ValidatorGroupRewards, ValidatorRewards, VoterRewards}
   alias Explorer.{Chain, Market}
-  alias Explorer.Chain.Wei
+  alias Explorer.Chain.CeloElectionRewards
   alias Explorer.ExchangeRates.Token
   alias Indexer.Fetcher.CoinBalanceOnDemand
   alias Phoenix.View
@@ -19,8 +18,9 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
     with {:ok, address_hash} <- Chain.string_to_address_hash(address_hash_string),
          {:ok, address} <- Chain.hash_to_address(address_hash),
          {:ok, false} <- AccessHelpers.restricted_access?(address_hash_string, params) do
-      epoch_transactions_object = calculate_based_on_account_type(address, params)
-      epoch_transactions_plus_one = epoch_transactions_object.rewards
+      paging_options_keyword = paging_options(params)
+      %Explorer.PagingOptions{page_size: page_size} = Keyword.get(paging_options_keyword, :paging_options)
+      epoch_transactions_plus_one = get_rewards(address, Map.put(params, "page_size", page_size))
       {epoch_transactions, next_page} = split_list_by_page(epoch_transactions_plus_one)
 
       next_page_path =
@@ -59,14 +59,7 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
     with {:ok, address_hash} <- Chain.string_to_address_hash(address_hash_string),
          {:ok, address} <- Chain.hash_to_address(address_hash),
          {:ok, false} <- AccessHelpers.restricted_access?(address_hash_string, params) do
-      epoch_transactions = calculate_based_on_account_type(address)
-
-      current_active_votes =
-        if address.celo_account.account_type == "normal" do
-          get_current_active_votes(epoch_transactions.rewards)
-        else
-          nil
-        end
+      rewards_sum = get_sums(address)
 
       render(
         conn,
@@ -76,8 +69,7 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
         current_path: Controller.current_full_path(conn),
         exchange_rate: Market.get_exchange_rate("cGLD") || Token.null(),
         counters_path: address_path(conn, :address_counters, %{"id" => address_hash_string}),
-        epoch_transactions: epoch_transactions,
-        current_active_votes: current_active_votes,
+        rewards_sum: rewards_sum,
         is_proxy: false
       )
     else
@@ -92,20 +84,17 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
     end
   end
 
-  defp calculate_based_on_account_type(address, params \\ []) do
+  defp get_rewards(address, params) do
     case address.celo_account.account_type do
-      "normal" -> VoterRewards.calculate(address.hash, nil, nil, params)
-      "validator" -> ValidatorRewards.calculate(address.hash, nil, nil, params)
-      "group" -> ValidatorGroupRewards.calculate(address.hash, nil, nil)
+      "normal" -> CeloElectionRewards.get_paginated_rewards([address.hash], ["voter"], params)
+      type -> CeloElectionRewards.get_paginated_rewards([address.hash], [type, "voter"], params)
     end
   end
 
-  defp get_current_active_votes(rewards) do
-    if Enum.empty?(rewards) do
-      0
-    else
-      %{votes: %Wei{value: current_active_votes}} = rewards |> Enum.reverse() |> hd()
-      current_active_votes
+  defp get_sums(address) do
+    case address.celo_account.account_type do
+      "normal" -> CeloElectionRewards.get_rewards_sum_for_account(address.hash)
+      type -> CeloElectionRewards.get_rewards_sums_for_account(address.hash, type)
     end
   end
 end
