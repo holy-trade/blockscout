@@ -118,6 +118,6 @@ indexer_empty_blocks_sanitizer_batch_size =
   end
 
 config :indexer, Indexer.Fetcher.EmptyBlocksSanitizer.Supervisor,
-  disabled?: System.get_env("INDEXER_DISABLE_EMPTY_BLOCK_SANITIZER", "false") == "true"
+  disabled?: System.get_env("INDEXER_DISABLE_EMPTY_BLOCK_SANITIZER", "true") == "true"
 
 config :indexer, Indexer.Fetcher.EmptyBlocksSanitizer, batch_size: indexer_empty_blocks_sanitizer_batch_size
