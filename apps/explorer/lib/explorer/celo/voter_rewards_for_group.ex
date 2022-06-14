@@ -37,7 +37,8 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
 
     query = events_base_query()
 
-    time_bound_events_query = set_start_and_end_for_events_query(query, from_date, to_date, params, voter_address_hash, group_address_hash)
+    time_bound_events_query =
+      set_start_and_end_for_events_query(query, from_date, to_date, params, voter_address_hash, group_address_hash)
 
     voter_activated_or_revoked_votes_for_group_events =
       time_bound_events_query
@@ -46,30 +47,37 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
       |> Repo.all()
 
     # If no activated event present since genesis block, we don't have to look for votes for this voter/group pair
-    if Enum.empty?(voter_activated_or_revoked_votes_for_group_events) and from_date == ~U[2020-04-22 16:00:00.000000Z] and Enum.empty?(params) do
+    if Enum.empty?(voter_activated_or_revoked_votes_for_group_events) and from_date == ~U[2020-04-22 16:00:00.000000Z] and
+         Enum.empty?(params) do
       %{rewards: [], total: 0, group: group_address_hash}
     else
       query = votes_base_query(voter_address_hash, group_address_hash, to_date)
 
       votes_query_beginning_after_first_event_or_passed_from_date =
-        set_start_and_end_for_votes_query(query, from_date, to_date, voter_activated_or_revoked_votes_for_group_events, params)
+        set_start_and_end_for_votes_query(
+          query,
+          from_date,
+          to_date,
+          voter_activated_or_revoked_votes_for_group_events,
+          params
+        )
 
       voter_votes_for_group =
         votes_query_beginning_after_first_event_or_passed_from_date
         |> Repo.all()
 
       events_and_votes_chunked_by_epoch =
-      if Enum.empty?(params) do
-        merge_events_with_votes_and_chunk_by_epoch(
-          voter_activated_or_revoked_votes_for_group_events,
-          voter_votes_for_group
-        )
-      else
-        merge_events_with_votes_and_chunk_by_epoch(
-          Enum.reverse(voter_activated_or_revoked_votes_for_group_events),
-          Enum.reverse(voter_votes_for_group)
-        )
-      end
+        if Enum.empty?(params) do
+          merge_events_with_votes_and_chunk_by_epoch(
+            voter_activated_or_revoked_votes_for_group_events,
+            voter_votes_for_group
+          )
+        else
+          merge_events_with_votes_and_chunk_by_epoch(
+            Enum.reverse(voter_activated_or_revoked_votes_for_group_events),
+            Enum.reverse(voter_votes_for_group)
+          )
+        end
 
       {rewards, {rewards_sum, _}} = calculate_rewards_and_rewards_sum(events_and_votes_chunked_by_epoch)
 
@@ -86,6 +94,7 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
         else
           rewards
         end
+
       %{rewards: rewards, total: rewards_sum, group: group_address_hash, group_name: group_name}
     end
   end
@@ -168,22 +177,30 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
 
   defp set_start_and_end_for_events_query(query, _from_date, _to_date, %{"epoch_number" => latest_epoch_number}, _, _) do
     latest_epoch_number_int = String.to_integer(latest_epoch_number)
+
     query
     |> where([_event, block], block.number < ^latest_epoch_number_int * 17280)
     |> where([_event, block], block.number >= (^latest_epoch_number_int - @page_size - 1) * 17280)
     |> reverse_order()
   end
 
-
-  defp set_start_and_end_for_events_query(query, _from_date, _to_date, %{"address_id" => _, "type" => _}, voter_hash, group_hash) do
-    latest_activated_event = Repo.one(
-      from(
-        event in CeloContractEvent,
-        where: fragment("? ->> ? = ?", event.params, "group", ^to_string(group_hash)),
-        where: fragment("? ->> ? = ?", event.params, "address", ^to_string(voter_hash)),
-        select: max(event.block_number),
+  defp set_start_and_end_for_events_query(
+         query,
+         _from_date,
+         _to_date,
+         %{"address_id" => _, "type" => _},
+         voter_hash,
+         group_hash
+       ) do
+    latest_activated_event =
+      Repo.one(
+        from(
+          event in CeloContractEvent,
+          where: fragment("? ->> ? = ?", event.params, "group", ^to_string(group_hash)),
+          where: fragment("? ->> ? = ?", event.params, "address", ^to_string(voter_hash)),
+          select: max(event.block_number)
+        )
       )
-    )
 
     query
     |> where([_event, block], block.number >= (^latest_activated_event - @page_size - 1) * 17280)
@@ -205,7 +222,10 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
     )
   end
 
-  defp set_start_and_end_for_votes_query(query, _, _, _,%{"epoch_number" => latest_epoch_number, "items_count" => limit}) do
+  defp set_start_and_end_for_votes_query(query, _, _, _, %{
+         "epoch_number" => latest_epoch_number,
+         "items_count" => limit
+       }) do
     query
     |> reverse_order()
     |> limit(^limit + 1)
