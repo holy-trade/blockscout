@@ -6,6 +6,15 @@
             to: block_transaction_path(@conn, :index, @conn.params["block_hash_or_number"])
             )
         %>
+  <%= if rem(@conn.assigns.block.number, 17280) == 0 do %>
+  <%=
+          link(
+            gettext("Epoch Transactions"),
+            class: "card-tab #{tab_status("epoch-transactions", @conn.request_path)}",
+            to: block_epoch_transaction_path(@conn, :index, @conn.params["block_hash_or_number"])
+            )
+        %>
+  <% end %>
   <%=
           link(
             gettext("Signers"),

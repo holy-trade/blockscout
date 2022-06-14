@@ -36,8 +36,7 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
         Enum.map(epoch_transactions, fn epoch_transaction ->
           View.render_to_string(
             EpochTransactionView,
-            "_tile.html",
-            current_address: address,
+            "_election_tile.html",
             epoch_transaction: epoch_transaction
           )
         end)
@@ -86,8 +85,8 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
 
   defp get_rewards(address, params) do
     case address.celo_account.account_type do
-      "normal" -> CeloElectionRewards.get_paginated_rewards([address.hash], ["voter"], params)
-      type -> CeloElectionRewards.get_paginated_rewards([address.hash], [type, "voter"], params)
+      "normal" -> CeloElectionRewards.get_paginated_rewards_for_address([address.hash], ["voter"], params)
+      type -> CeloElectionRewards.get_paginated_rewards_for_address([address.hash], [type, "voter"], params)
     end
   end
 

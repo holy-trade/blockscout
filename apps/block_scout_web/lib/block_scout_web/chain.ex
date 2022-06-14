@@ -222,8 +222,8 @@ defmodule BlockScoutWeb.Chain do
     [paging_options: %{@default_paging_options | key: {name, type, value}}]
   end
 
-  def paging_options(%{"epoch_number" => epoch_number}) do
-    [paging_options: %{@default_paging_options | key: {epoch_number}}]
+  def paging_options(%{"reward_type" => reward_type}) do
+    [paging_options: %{@default_paging_options | key: {reward_type}}]
   end
 
   def paging_options(_params), do: [paging_options: @default_paging_options]
@@ -343,8 +343,8 @@ defmodule BlockScoutWeb.Chain do
     %{"block_number" => block_number}
   end
 
-  defp paging_params(%{epoch_number: epoch_number}) do
-    %{"epoch_number" => epoch_number}
+  defp paging_params(%{reward_type: reward_type}) do
+    %{"reward_type" => reward_type}
   end
 
   defp paging_params(%StakingPool{staking_address_hash: address_hash, stakes_ratio: value}) do

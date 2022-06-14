@@ -23,9 +23,10 @@ defmodule BlockScoutWeb.BlockView do
     "#{average} #{unit_text}"
   end
 
-  def block_type(%Block{consensus: false, nephews: []}), do: "Reorg"
-  def block_type(%Block{consensus: false}), do: "Uncle"
-  def block_type(_block), do: "Block"
+  def block_type(%Block{consensus: false, nephews: []}), do: "Reorg Details"
+  def block_type(%Block{consensus: false}), do: "Uncle Details"
+  def block_type(%Block{number: number}) when rem(number, 17280) == 0, do: "Epoch Block ##{div(number, 17280)}"
+  def block_type(_block), do: "Block Details"
 
   def block_miner(block) do
     if block.miner.names == [] and

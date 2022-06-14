@@ -71,8 +71,9 @@ defmodule Explorer.Chain.CeloElectionRewards do
     )
   end
 
-  def base_query(account_hash_list, reward_type_list) do
+  def base_address_query(account_hash_list, reward_type_list) do
     {:ok, zero_wei} = Wei.cast(0)
+
     from(rewards in __MODULE__,
       join: acc in CeloAccount,
       on: rewards.associated_account_hash == acc.address,
@@ -107,7 +108,7 @@ defmodule Explorer.Chain.CeloElectionRewards do
         from,
         to
       ) do
-    query_for_all_time = base_query(account_hash_list, reward_type_list)
+    query_for_all_time = base_address_query(account_hash_list, reward_type_list)
 
     query_for_time_frame =
       query_for_all_time |> where([rewards], fragment("? BETWEEN ? AND ?", rewards.block_timestamp, ^from, ^to))
@@ -120,20 +121,19 @@ defmodule Explorer.Chain.CeloElectionRewards do
     %{rewards: rewards, total_reward_celo: total_amount, from: from, to: to}
   end
 
-  def get_paginated_rewards(account_hash_list, reward_type_list, pagination_params) do
-    {items_count, _} = Map.get(pagination_params, "items_count", "0") |> Integer.parse()
-    page_size = Map.get(pagination_params, "page_size")
+  def get_paginated_rewards_for_address(account_hash_list, reward_type_list, pagination_params) do
+    {items_count, page_size} = extract_pagination_params(pagination_params)
 
-    query = base_query(account_hash_list, reward_type_list)
+    query = base_address_query(account_hash_list, reward_type_list)
 
     query |> limit(^page_size) |> offset(^items_count) |> Repo.all()
   end
 
   def get_voter_rewards_for_group(voter_hash_list, group_hash_list) do
-    base_query = base_query(voter_hash_list, ["voter"])
+    base_address_query = base_address_query(voter_hash_list, ["voter"])
 
     rewards =
-      base_query
+      base_address_query
       |> where([rewards], rewards.associated_account_hash in ^group_hash_list)
       |> Repo.all()
 
@@ -165,5 +165,38 @@ defmodule Explorer.Chain.CeloElectionRewards do
       |> Repo.one!()
 
     {other_sum, voting_sum}
+  end
+
+  def get_paginated_rewards_for_block(block_number, pagination_params) do
+    {items_count, page_size} = extract_pagination_params(pagination_params)
+    {:ok, zero_wei} = Wei.cast(0)
+
+    query =
+      from(reward in __MODULE__,
+        join: acc in CeloAccount,
+        on: reward.associated_account_hash == acc.address,
+        select: %{
+          account_hash: reward.account_hash,
+          amount: reward.amount,
+          associated_account_name: acc.name,
+          block_number: reward.block_number,
+          date: reward.block_timestamp,
+          reward_type: reward.reward_type
+        },
+        order_by: [desc: reward.account_hash, asc: reward.reward_type],
+        where: reward.amount != ^zero_wei,
+        where: reward.block_number == ^block_number,
+        limit: ^page_size,
+        offset: ^items_count
+      )
+
+    Repo.all(query)
+  end
+
+  defp extract_pagination_params(pagination_params) do
+    {items_count, _} = Map.get(pagination_params, "items_count", "0") |> Integer.parse()
+    page_size = Map.get(pagination_params, "page_size")
+
+    {items_count, page_size}
   end
 end
