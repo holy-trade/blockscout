@@ -10,7 +10,6 @@ defmodule Explorer.Chain.CeloElectionRewards do
       from: 2,
       limit: 2,
       offset: 2,
-      subquery: 1,
       where: 3
     ]
 
@@ -108,17 +107,20 @@ defmodule Explorer.Chain.CeloElectionRewards do
         from,
         to
       ) do
-    query_for_all_time = base_address_query(account_hash_list, reward_type_list)
+    query = base_query(account_hash_list, reward_type_list)
 
-    query_for_time_frame =
-      query_for_all_time |> where([rewards], fragment("? BETWEEN ? AND ?", rewards.block_timestamp, ^from, ^to))
+    query_for_time_frame = query |> where([rewards], fragment("? BETWEEN ? AND ?", rewards.block_timestamp, ^from, ^to))
 
     rewards = query_for_time_frame |> Repo.all()
 
-    total_amount_query = from(rewards in subquery(query_for_all_time), select: sum(rewards.amount))
-    total_amount = total_amount_query |> Repo.one()
+    {:ok, zero_wei} = Wei.cast(0)
 
-    %{rewards: rewards, total_reward_celo: total_amount, from: from, to: to}
+    %{
+      rewards: rewards,
+      total_reward_celo: Enum.reduce(rewards, zero_wei, fn curr, acc -> Wei.sum(curr.amount, acc) end),
+      from: from,
+      to: to
+    }
   end
 
   def get_paginated_rewards_for_address(account_hash_list, reward_type_list, pagination_params) do
