@@ -19,12 +19,17 @@
       <span class="bs-label reward font-weight-bold">
         <%= @epoch_transaction.amount |> Wei.to(:ether) %> <%= gettext "CELO" %>
       </span>
-      <span class="d-flex flex-md-row flex-column mt-3 ml-5 mt-md-0">
+      <span class="tile-address-wrapper d-flex flex-md-row mt-3 mt-md-0">
         <img alt="Page Not Found" src="/images/icons/arrow.png" width="28px" height="22.4px">
         <div class="d-flex align-items-end ml-2" style="height: 30px;">
-          <span class="tile-title">
+          <span class="tile-address-link-desktop">
             <%= link to: address_path(BlockScoutWeb.Endpoint, :show, @epoch_transaction.address), "data-test": "address_hash_link", class: assigns[:class] do %>
               <%= @epoch_transaction.address %>
+            <% end %>
+          </span>
+          <span class="tile-address-link-mobile">
+            <%= link to: address_transaction_path(BlockScoutWeb.Endpoint, :index, to_string(@epoch_transaction.address)), "data-test": "address_hash_link", class: assigns[:class] do %>
+              <span> (<%= BlockScoutWeb.AddressView.trimmed_hash(@epoch_transaction.address.hash) %>)</span>
             <% end %>
           </span>
         </div>
