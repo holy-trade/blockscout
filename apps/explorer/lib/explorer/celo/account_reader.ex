@@ -57,6 +57,15 @@ defmodule Explorer.Celo.AccountReader do
     end
   end
 
+  def get_carbon_offsetting_partner(bn) do
+    data = call_methods([{:epochrewards, "carbonOffsettingPartner", [], bn}])
+
+    case data["carbonOffsettingPartner"] do
+      {:ok, [res | _]} -> {:ok, res}
+      _ -> :error
+    end
+  end
+
   def epoch_reward_data(%{block_number: bn, block_hash: block_hash}) do
     methods = [
       {:epochrewards, "calculateTargetEpochRewards", [], bn},
