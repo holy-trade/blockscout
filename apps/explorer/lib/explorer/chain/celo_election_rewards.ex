@@ -107,7 +107,7 @@ defmodule Explorer.Chain.CeloElectionRewards do
         from,
         to
       ) do
-    query = base_query(account_hash_list, reward_type_list)
+    query = base_address_query(account_hash_list, reward_type_list)
 
     query_for_time_frame = query |> where([rewards], fragment("? BETWEEN ? AND ?", rewards.block_timestamp, ^from, ^to))
 
