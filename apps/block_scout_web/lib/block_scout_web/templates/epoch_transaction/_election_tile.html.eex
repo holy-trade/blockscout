@@ -1,7 +1,7 @@
 <div class="tile tile-type-epoch-transaction fade-in" data-test="epoch_transaction"
      data-key="<%= @epoch_transaction.block_number %>_<%= if @epoch_transaction.reward_type == "group", do: @epoch_transaction.associated_account_name, else: @epoch_transaction.account_hash %>"
      data-epoch-transaction-block-number="<%= @epoch_transaction.block_number %>"
-     data-epoch-transaction-group="<%= if @epoch_transaction.reward_type == "group", do: @epoch_transaction.validator, else: @epoch_transaction.associated_account_name %>">
+     data-epoch-transaction-group="<%= if @epoch_transaction.reward_type == "group", do: @epoch_transaction.account_hash, else: @epoch_transaction.associated_account_name %>">
   <div class="row tile-body">
     <!-- Color Block -->
     <div class="tile-transaction-type-block col-md-2 d-flex flex-row flex-md-column">
@@ -53,7 +53,7 @@
       </span>
       <span class="d-flex flex-md-row flex-column mt-3 mt-md-0">
         <span class="tile-title">
-          <%= gettext "Validator:" %> <%= @epoch_transaction.validator_name %>
+          <%= gettext "Validator:" %> <%= @epoch_transaction.associated_account_name %>
         </span>
       </span>
       <% end %>
