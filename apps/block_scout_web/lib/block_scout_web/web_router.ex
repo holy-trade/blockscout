@@ -377,6 +377,8 @@ defmodule BlockScoutWeb.WebRouter do
 
     get("/verified-contracts", VerifiedContractsController, :index)
 
+    get("/chunky-request", ChunkyRequestController, :index)
+
     get("/*path", PageNotFoundController, :index)
   end
 end
