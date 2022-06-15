@@ -196,7 +196,8 @@ defmodule Explorer.Chain.CeloElectionRewards do
   end
 
   defp extract_pagination_params(pagination_params) do
-    {items_count, _} = Map.get(pagination_params, "items_count", "0") |> Integer.parse()
+    items_count_string = Map.get(pagination_params, "items_count", "0")
+    {items_count, _} = items_count_string |> Integer.parse()
     page_size = Map.get(pagination_params, "page_size")
 
     {items_count, page_size}

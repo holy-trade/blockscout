@@ -89,10 +89,10 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
         Repo.one(from(account in CeloAccount, where: account.address == ^to_string(group_address_hash)))
 
       rewards =
-        if not Enum.empty?(params) do
-          Enum.reverse(rewards)
-        else
+        if Enum.empty?(params) do
           rewards
+        else
+          Enum.reverse(rewards)
         end
 
       %{rewards: rewards, total: rewards_sum, group: group_address_hash, group_name: group_name}
@@ -153,7 +153,7 @@ defmodule Explorer.Celo.VoterRewardsForGroup do
     |> Enum.chunk_while([], chunk_fun, after_fun)
   end
 
-  defp events_base_query() do
+  defp events_base_query do
     from(event in CeloContractEvent,
       inner_join: block in Block,
       on: event.block_number == block.number,

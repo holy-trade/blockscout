@@ -4,7 +4,8 @@ defmodule BlockScoutWeb.BlockEpochTransactionController do
   import BlockScoutWeb.Chain,
     only: [paging_options: 1, next_page_params: 3, split_list_by_page: 1]
 
-  import Explorer.Chain, only: [hash_to_block: 2, number_to_block: 2, string_to_address_hash: 1, string_to_block_hash: 1, hash_to_address: 1]
+  import Explorer.Chain,
+    only: [hash_to_block: 2, number_to_block: 2, string_to_address_hash: 1, string_to_block_hash: 1, hash_to_address: 1]
 
   alias BlockScoutWeb.{Controller, EpochTransactionView}
   alias Explorer.Celo.AccountReader
@@ -67,17 +68,19 @@ defmodule BlockScoutWeb.BlockEpochTransactionController do
           type: "community"
         }
 
-        carbon_transaction_json = View.render_to_string(
-          EpochTransactionView,
-          "_epoch_tile.html",
-          epoch_transaction: carbon_epoch_transaction
-        )
+        carbon_transaction_json =
+          View.render_to_string(
+            EpochTransactionView,
+            "_epoch_tile.html",
+            epoch_transaction: carbon_epoch_transaction
+          )
 
-        community_transaction_json = View.render_to_string(
-          EpochTransactionView,
-          "_epoch_tile.html",
-          epoch_transaction: community_epoch_transaction
-        )
+        community_transaction_json =
+          View.render_to_string(
+            EpochTransactionView,
+            "_epoch_tile.html",
+            epoch_transaction: community_epoch_transaction
+          )
 
         epoch_transactions_json =
           Enum.map(epoch_transactions, fn epoch_transaction ->
@@ -91,7 +94,7 @@ defmodule BlockScoutWeb.BlockEpochTransactionController do
         json(
           conn,
           %{
-#            items: [carbon_epoch_transaction | epoch_transactions_json],
+            #            items: [carbon_epoch_transaction | epoch_transactions_json],
             items: [community_transaction_json, carbon_transaction_json] ++ epoch_transactions_json,
             next_page_path: next_page_path
           }

@@ -23,8 +23,10 @@ defmodule Explorer.Celo.ValidatorGroupRewards do
   def calculate(group_address_hash, from_date, to_date, params \\ []) do
     {from_date, to_date} = set_default_from_and_to_dates_when_nil(from_date, to_date)
 
+    base_query = base_query(from_date, to_date, "group")
+
     query =
-      base_query(from_date, to_date, "group")
+      base_query
       |> join(:inner, [event, block], account in CeloAccount,
         on: account.address == fragment("cast(?->>'validator' AS bytea)", event.params)
       )
