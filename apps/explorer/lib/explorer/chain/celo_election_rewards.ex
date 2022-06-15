@@ -166,7 +166,8 @@ defmodule Explorer.Chain.CeloElectionRewards do
       |> where([reward], reward.reward_type == ^type)
       |> Repo.one!()
 
-    {other_sum, voting_sum}
+    {:ok, zero_wei} = Wei.cast(0)
+    {other_sum, voting_sum || zero_wei}
   end
 
   def get_paginated_rewards_for_block(block_number, pagination_params) do
