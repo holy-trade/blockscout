@@ -45,7 +45,7 @@ defmodule Explorer.Chain.Cache.TransactionCount do
             set_db_cache(result)
             set_count(result)
           else
-            {:updating, apps} ->
+            {:running, apps} ->
               Logger.info("Transaction count query is already running on apps: #{Enum.join(apps, ",")}")
 
             {:fresh_db_cache, value} ->
@@ -93,15 +93,15 @@ defmodule Explorer.Chain.Cache.TransactionCount do
   # if so, we will refuse to launch another task and simply take the current estimated value until the running process has updated
   # the db
   def query_db_for_running_tx_count_pids() do
-    %{rows: results} = Ecto.Adapters.SQL.query!(Explorer.Repo, "SELECT application_name, pid
+    %{rows: results} = Ecto.Adapters.SQL.query!(Explorer.Repo, "SELECT application_name
             FROM pg_stat_activity
-            WHERE lower(query) like 'select count%from \"transactions\"%'")
+            WHERE lower(query) like 'select count%\"transactions\"%'
+            and lower(query) not like '%where%'")
 
     if length(results) == 0 do
       {:ok, :nothing_running}
     else
-      instances = results |> Enum.map(fn [_pid, appname] -> appname end)
-      {:running, instances}
+      {:running, results}
     end
   end
 

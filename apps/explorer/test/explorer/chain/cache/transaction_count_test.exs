@@ -57,4 +57,31 @@ defmodule Explorer.Chain.Cache.TransactionCountTest do
     assert updated_value == 2
   end
 
+  test "does not run if 'other' tx count query is running" do
+    #fake a long running tx count query
+    {:ok, pid} = Task.Supervisor.start_child(Explorer.TaskSupervisor, fn ->
+      # checkout a different db connection so it can be intentionally held
+      :ok = Ecto.Adapters.SQL.Sandbox.checkout(Explorer.Repo)
+      Ecto.Adapters.SQL.query!(Explorer.Repo, "SELECT count(*), pg_sleep(5) from \"transactions\"")
+    end)
+
+    Process.sleep(100)
+
+    running_queries = TransactionCount.query_db_for_running_tx_count_pids()
+    result = TransactionCount.get_count()
+
+    # should indicate a query is running
+    assert {:running, _} = running_queries
+    assert nil == result
+
+    # should not pick up new transactions yet
+    insert(:transaction)
+    insert(:transaction)
+
+    result = TransactionCount.get_count()
+    assert nil == result
+
+    # kill the slow db query task
+    Process.exit(pid, :shutdown)
+  end
 end
