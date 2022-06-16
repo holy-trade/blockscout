@@ -28,14 +28,14 @@ defmodule Explorer.Chain.Cache.TransactionCount do
   end
 
   defp handle_fallback(:async_task) do
-    # If this gets called it means an async task was requested, but none exists on this vm instance
+    # If this gets called it means an async task was requested, but none exists on this beam instance
     # so a new one needs to be launched
     {:ok, task} =
       Task.start(fn ->
         try do
           # run the tx count query iff
           # 1. the value currently cached in the db is older than `cache_period` (db time)
-          # 2. there is currently no running tx count query
+          # 2. there same query is not currently running on the db (if so, that value will be retrieved from a future step 1)
           with {:stale} <- query_db_for_cache(),
                {:ok, :nothing_running} <- query_db_for_running_tx_count_pids(),
                result <- query_db_for_exact_count() do
