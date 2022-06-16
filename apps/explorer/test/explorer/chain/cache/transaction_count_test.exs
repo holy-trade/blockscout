@@ -84,4 +84,51 @@ defmodule Explorer.Chain.Cache.TransactionCountTest do
     # kill the slow db query task
     Process.exit(pid, :shutdown)
   end
+
+
+  test "retrieves cached values from db if cache is still valid" do
+    insert(:transaction)
+    insert(:transaction)
+    insert(:transaction)
+    insert(:transaction)
+    insert(:transaction)
+
+    # 5 tx in db, but we force a cached value of 3 to check that the tx count is not triggered
+    LastFetchedCounter.changeset(%LastFetchedCounter{},  %{"counter_type" => "total_transaction_count", "value" => 3})
+    |> Repo.insert()
+
+    # no cache yet, run task which will check db for cached value
+    _result = TransactionCount.get_count()
+    Process.sleep(100)
+
+    result = TransactionCount.get_count() |> Decimal.to_integer()
+
+    # tx count should not have run, so value should be set to 3
+    assert result == 3
+  end
+
+  test "Runs query when cache is stale" do
+    insert(:transaction)
+    insert(:transaction)
+    insert(:transaction)
+    insert(:transaction)
+    insert(:transaction)
+
+    LastFetchedCounter.changeset(%LastFetchedCounter{},  %{"counter_type" => "total_transaction_count", "value" => 3})
+    |> Repo.insert()
+
+    Ecto.Adapters.SQL.query!(Repo, "UPDATE last_fetched_counters
+                                    SET updated_at = now() - interval '10 hours'
+                                    WHERE counter_type = 'total_transaction_count'")
+
+
+    # will check db cached value, notice that updated_at is older than cache_period and start tx count query
+    _result = TransactionCount.get_count()
+    Process.sleep(100)
+
+    result = TransactionCount.get_count() |> Decimal.to_integer()
+
+    # tx count should have run, so value is accurately 5
+    assert result == 5
+  end
 end
