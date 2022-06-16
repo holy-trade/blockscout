@@ -58,12 +58,13 @@ defmodule Explorer.Chain.Cache.TransactionCountTest do
   end
 
   test "does not run if 'other' tx count query is running" do
-    #fake a long running tx count query
-    {:ok, pid} = Task.Supervisor.start_child(Explorer.TaskSupervisor, fn ->
-      # checkout a different db connection so it can be intentionally held
-      :ok = Ecto.Adapters.SQL.Sandbox.checkout(Explorer.Repo)
-      Ecto.Adapters.SQL.query!(Explorer.Repo, "SELECT count(*), pg_sleep(5) from \"transactions\"")
-    end)
+    # fake a long running tx count query
+    {:ok, pid} =
+      Task.Supervisor.start_child(Explorer.TaskSupervisor, fn ->
+        # checkout a different db connection so it can be intentionally held
+        :ok = Ecto.Adapters.SQL.Sandbox.checkout(Explorer.Repo)
+        Ecto.Adapters.SQL.query!(Explorer.Repo, "SELECT count(*), pg_sleep(5) from \"transactions\"")
+      end)
 
     Process.sleep(100)
 
@@ -85,7 +86,6 @@ defmodule Explorer.Chain.Cache.TransactionCountTest do
     Process.exit(pid, :shutdown)
   end
 
-
   test "retrieves cached values from db if cache is still valid" do
     insert(:transaction)
     insert(:transaction)
@@ -94,7 +94,7 @@ defmodule Explorer.Chain.Cache.TransactionCountTest do
     insert(:transaction)
 
     # 5 tx in db, but we force a cached value of 3 to check that the tx count is not triggered
-    LastFetchedCounter.changeset(%LastFetchedCounter{},  %{"counter_type" => "total_transaction_count", "value" => 3})
+    LastFetchedCounter.changeset(%LastFetchedCounter{}, %{"counter_type" => "total_transaction_count", "value" => 3})
     |> Repo.insert()
 
     # no cache yet, run task which will check db for cached value
@@ -114,13 +114,12 @@ defmodule Explorer.Chain.Cache.TransactionCountTest do
     insert(:transaction)
     insert(:transaction)
 
-    LastFetchedCounter.changeset(%LastFetchedCounter{},  %{"counter_type" => "total_transaction_count", "value" => 3})
+    LastFetchedCounter.changeset(%LastFetchedCounter{}, %{"counter_type" => "total_transaction_count", "value" => 3})
     |> Repo.insert()
 
     Ecto.Adapters.SQL.query!(Repo, "UPDATE last_fetched_counters
                                     SET updated_at = now() - interval '10 hours'
                                     WHERE counter_type = 'total_transaction_count'")
-
 
     # will check db cached value, notice that updated_at is older than cache_period and start tx count query
     _result = TransactionCount.get_count()

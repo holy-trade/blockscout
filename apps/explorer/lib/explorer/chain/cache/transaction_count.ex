@@ -6,15 +6,16 @@ defmodule Explorer.Chain.Cache.TransactionCount do
   @default_cache_period :timer.hours(2)
 
   use Explorer.Chain.MapCache,
-      name: :transaction_count,
-      key: :count,
-      key: :async_task,
-      global_ttl: get_cache_period(),
-      ttl_check_interval: :timer.minutes(15),
-      callback: &async_task_on_deletion(&1)
+    name: :transaction_count,
+    key: :count,
+    key: :async_task,
+    global_ttl: get_cache_period(),
+    ttl_check_interval: :timer.minutes(15),
+    callback: &async_task_on_deletion(&1)
 
   require Logger
 
+  alias Ecto.Adapters.SQL
   alias Explorer.{Chain, Repo}
   alias Explorer.Chain.Transaction
   alias Explorer.Counters.LastFetchedCounter
@@ -41,7 +42,6 @@ defmodule Explorer.Chain.Cache.TransactionCount do
           with {:stale} <- query_db_for_cache(),
                {:ok, :nothing_running} <- query_db_for_running_tx_count_pids(),
                result <- query_db_for_exact_count() do
-
             set_db_cache(result)
             set_count(result)
           else
@@ -75,9 +75,9 @@ defmodule Explorer.Chain.Cache.TransactionCount do
     |> System.get_env("")
     |> Integer.parse()
     |> case do
-         {integer, ""} -> :timer.seconds(integer)
-         _ -> @default_cache_period
-       end
+      {integer, ""} -> :timer.seconds(integer)
+      _ -> @default_cache_period
+    end
   end
 
   defp set_db_cache(tx_count) do
@@ -92,13 +92,13 @@ defmodule Explorer.Chain.Cache.TransactionCount do
   # getting count on a large table is very expensive and so we check for a process running on the db level
   # if so, we will refuse to launch another task and simply take the current estimated value until the running process has updated
   # the db
-  def query_db_for_running_tx_count_pids() do
-    %{rows: results} = Ecto.Adapters.SQL.query!(Explorer.Repo, "SELECT application_name
+  def query_db_for_running_tx_count_pids do
+    %{rows: results} = SQL.query!(Repo, "SELECT application_name
             FROM pg_stat_activity
             WHERE lower(query) like 'select count%\"transactions\"%'
             and lower(query) not like '%where%'")
 
-    if length(results) == 0 do
+    if Enum.is_empty?(results) do
       {:ok, :nothing_running}
     else
       {:running, results}
@@ -106,28 +106,38 @@ defmodule Explorer.Chain.Cache.TransactionCount do
   end
 
   # run the count(hash) query
-  def query_db_for_exact_count() do
+  def query_db_for_exact_count do
     Repo.aggregate(Transaction, :count, :hash, timeout: :infinity)
   end
 
   # check for a valid cached value
-  def query_db_for_cache() do
-    fetched_result = from(
-                       last_fetched_counter in LastFetchedCounter,
-                       where: last_fetched_counter.counter_type == ^@transaction_counter_type,
-                       select: {last_fetched_counter.value, fragment("extract(epoch from now() - (?))", last_fetched_counter.updated_at)}
-                     ) |> Repo.one()
+  def query_db_for_cache do
+    query =
+      from(
+        last_fetched_counter in LastFetchedCounter,
+        where: last_fetched_counter.counter_type == ^@transaction_counter_type,
+        select:
+          {last_fetched_counter.value, fragment("extract(epoch from now() - (?))", last_fetched_counter.updated_at)}
+      )
 
+    fetched_result = query |> Repo.one()
 
-    #local so that value can be used in guard clause
+    # local so that value can be used in guard clause
     cache_period = get_cache_period()
 
     case fetched_result do
-      nil -> {:stale}
-      {_value, how_old_ms} when how_old_ms > cache_period ->
-        Logger.info("Transaction count cache is #{how_old_ms} ms old and above configured cache period #{cache_period} ms")
+      nil ->
         {:stale}
-      {value, _how_old_ms} -> {:fresh_db_cache, value}
+
+      {_value, how_old_ms} when how_old_ms > cache_period ->
+        Logger.info(
+          "Transaction count cache is #{how_old_ms} ms old and above configured cache period #{cache_period} ms"
+        )
+
+        {:stale}
+
+      {value, _how_old_ms} ->
+        {:fresh_db_cache, value}
     end
   end
 end
