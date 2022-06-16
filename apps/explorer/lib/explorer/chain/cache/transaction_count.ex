@@ -16,6 +16,7 @@ defmodule Explorer.Chain.Cache.TransactionCount do
   require Logger
 
   alias Ecto.Adapters.SQL
+  alias Explorer.Celo.Telemetry
   alias Explorer.{Chain, Repo}
   alias Explorer.Chain.Transaction
   alias Explorer.Counters.LastFetchedCounter
@@ -107,7 +108,14 @@ defmodule Explorer.Chain.Cache.TransactionCount do
 
   # run the count(hash) query
   def query_db_for_exact_count do
-    Repo.aggregate(Transaction, :count, :hash, timeout: :infinity)
+    start = Telemetry.start(:tx_count_query)
+    result = Repo.aggregate(Transaction, :count, :hash, timeout: :infinity)
+    stop = Telemetry.stop(:tx_count_query, start)
+    duration = System.convert_time_unit(stop - start, :native, :milliseconds)
+
+    Logger.info("Retrieved transaction count #{result} took #{duration} ms")
+
+    result
   end
 
   # check for a valid cached value

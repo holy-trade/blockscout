@@ -99,7 +99,7 @@ defmodule Explorer.Chain.Cache.TransactionCountTest do
 
     # no cache yet, run task which will check db for cached value
     _result = TransactionCount.get_count()
-    Process.sleep(100)
+    Process.sleep(2000)
 
     result = TransactionCount.get_count()
 
@@ -123,7 +123,7 @@ defmodule Explorer.Chain.Cache.TransactionCountTest do
 
     # will check db cached value, notice that updated_at is older than cache_period and start tx count query
     _result = TransactionCount.get_count()
-    Process.sleep(100)
+    Process.sleep(2000)
 
     result = TransactionCount.get_count()
 
