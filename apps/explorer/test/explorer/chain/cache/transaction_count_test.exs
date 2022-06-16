@@ -101,7 +101,7 @@ defmodule Explorer.Chain.Cache.TransactionCountTest do
     _result = TransactionCount.get_count()
     Process.sleep(100)
 
-    result = TransactionCount.get_count() |> Decimal.to_integer()
+    result = TransactionCount.get_count()
 
     # tx count should not have run, so value should be set to 3
     assert result == 3
@@ -125,7 +125,7 @@ defmodule Explorer.Chain.Cache.TransactionCountTest do
     _result = TransactionCount.get_count()
     Process.sleep(100)
 
-    result = TransactionCount.get_count() |> Decimal.to_integer()
+    result = TransactionCount.get_count()
 
     # tx count should have run, so value is accurately 5
     assert result == 5

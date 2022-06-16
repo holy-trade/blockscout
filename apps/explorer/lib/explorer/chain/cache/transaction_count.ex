@@ -98,7 +98,7 @@ defmodule Explorer.Chain.Cache.TransactionCount do
             WHERE lower(query) like 'select count%\"transactions\"%'
             and lower(query) not like '%where%'")
 
-    if Enum.is_empty?(results) do
+    if Enum.empty?(results) do
       {:ok, :nothing_running}
     else
       {:running, results}
@@ -117,7 +117,8 @@ defmodule Explorer.Chain.Cache.TransactionCount do
         last_fetched_counter in LastFetchedCounter,
         where: last_fetched_counter.counter_type == ^@transaction_counter_type,
         select:
-          {last_fetched_counter.value, fragment("extract(epoch from now() - (?))", last_fetched_counter.updated_at)}
+          {last_fetched_counter.value,
+           fragment("extract(epoch from (now() - (?))) * 1000 as milliseconds_old", last_fetched_counter.updated_at)}
       )
 
     fetched_result = query |> Repo.one()
@@ -131,13 +132,13 @@ defmodule Explorer.Chain.Cache.TransactionCount do
 
       {_value, how_old_ms} when how_old_ms > cache_period ->
         Logger.info(
-          "Transaction count cache is #{how_old_ms} ms old and above configured cache period #{cache_period} ms"
+          "Transaction count cache is #{how_old_ms |> round()} ms old and above configured cache period #{cache_period} ms"
         )
 
         {:stale}
 
       {value, _how_old_ms} ->
-        {:fresh_db_cache, value}
+        {:fresh_db_cache, value |> Decimal.to_integer()}
     end
   end
 end
