@@ -9,7 +9,7 @@ defmodule Explorer.Chain.Cache.TransactionCount do
       name: :transaction_count,
       key: :count,
       key: :async_task,
-      global_ttl: cache_period(),
+      global_ttl: get_cache_period(),
       ttl_check_interval: :timer.minutes(15),
       callback: &async_task_on_deletion(&1)
 
@@ -17,6 +17,8 @@ defmodule Explorer.Chain.Cache.TransactionCount do
 
   alias Explorer.{Chain, Repo}
   alias Explorer.Chain.Transaction
+  alias Explorer.Counters.LastFetchedCounter
+  import Ecto.Query
 
   @transaction_counter_type "total_transaction_count"
   defp handle_fallback(:count) do
@@ -47,7 +49,7 @@ defmodule Explorer.Chain.Cache.TransactionCount do
               Logger.info("Transaction count query is already running on apps: #{Enum.join(apps, ",")}")
 
             {:fresh_db_cache, value} ->
-              set_count(result)
+              set_count(value)
           end
         rescue
           e ->
@@ -68,7 +70,7 @@ defmodule Explorer.Chain.Cache.TransactionCount do
 
   defp async_task_on_deletion(_data), do: nil
 
-  defp cache_period do
+  defp get_cache_period do
     "TXS_COUNT_CACHE_PERIOD"
     |> System.get_env("")
     |> Integer.parse()
@@ -110,17 +112,22 @@ defmodule Explorer.Chain.Cache.TransactionCount do
 
   # check for a valid cached value
   def query_db_for_cache() do
-    {value, how_old_ms} = from(
-                            last_fetched_counter in LastFetchedCounter,
-                            where: last_fetched_counter.counter_type == ^@transaction_counter_type,
-                            select: {last_fetched_counter.value, fragment("extract(epoch from now() - (?)", last_fetched_counter.updated_at)}
-                          ) |> Repo.one()
+    fetched_result = from(
+                       last_fetched_counter in LastFetchedCounter,
+                       where: last_fetched_counter.counter_type == ^@transaction_counter_type,
+                       select: {last_fetched_counter.value, fragment("extract(epoch from now() - (?))", last_fetched_counter.updated_at)}
+                     ) |> Repo.one()
 
-    if how_old_ms > cache_period() do
-      Logger.info("Transaction count cache is #{how_old_ms} ms old and above cache period #{cache_period()} ms")
-      {:stale}
-    else
-      {:fresh_db_cache, value}
+
+    #local so that value can be used in guard clause
+    cache_period = get_cache_period()
+
+    case fetched_result do
+      nil -> {:stale}
+      {_value, how_old_ms} when how_old_ms > cache_period ->
+        Logger.info("Transaction count cache is #{how_old_ms} ms old and above configured cache period #{cache_period} ms")
+        {:stale}
+      {value, _how_old_ms} -> {:fresh_db_cache, value}
     end
   end
 end

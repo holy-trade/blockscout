@@ -56,4 +56,5 @@ defmodule Explorer.Chain.Cache.TransactionCountTest do
 
     assert updated_value == 2
   end
+
 end
