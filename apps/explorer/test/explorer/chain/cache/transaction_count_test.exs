@@ -1,5 +1,5 @@
 defmodule Explorer.Chain.Cache.TransactionCountTest do
-  use Explorer.DataCase
+  use Explorer.DataCase, async: false
 
   alias Explorer.Chain.Cache.TransactionCount
   alias Explorer.Counters.LastFetchedCounter
