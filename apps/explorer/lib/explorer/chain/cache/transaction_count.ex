@@ -6,18 +6,19 @@ defmodule Explorer.Chain.Cache.TransactionCount do
   @default_cache_period :timer.hours(2)
 
   use Explorer.Chain.MapCache,
-    name: :transaction_count,
-    key: :count,
-    key: :async_task,
-    global_ttl: cache_period(),
-    ttl_check_interval: :timer.minutes(15),
-    callback: &async_task_on_deletion(&1)
+      name: :transaction_count,
+      key: :count,
+      key: :async_task,
+      global_ttl: cache_period(),
+      ttl_check_interval: :timer.minutes(15),
+      callback: &async_task_on_deletion(&1)
 
   require Logger
 
   alias Explorer.{Chain, Repo}
   alias Explorer.Chain.Transaction
 
+  @transaction_counter_type "total_transaction_count"
   defp handle_fallback(:count) do
     # This will get the task PID if one exists and launch a new task if not
     # See next `handle_fallback` definition
@@ -27,30 +28,31 @@ defmodule Explorer.Chain.Cache.TransactionCount do
   end
 
   defp handle_fallback(:async_task) do
-    # If this gets called it means an async task was requested, but none exists
+    # If this gets called it means an async task was requested, but none exists on this vm instance
     # so a new one needs to be launched
     {:ok, task} =
       Task.start(fn ->
         try do
-          with {:ok, :nothing_running} <- query_db_for_running_tx_count_pids(),
-              result <- query_db_for_exact_count() do
+          # run the tx count query iff
+          # 1. the value currently cached in the db is older than `cache_period` (db time)
+          # 2. there is currently no running tx count query
+          with {:stale} <- query_db_for_cache(),
+               {:ok, :nothing_running} <- query_db_for_running_tx_count_pids(),
+               result <- query_db_for_exact_count() do
 
-            params = %{
-              counter_type: "total_transaction_count",
-              value: result
-            }
-
-            Chain.upsert_last_fetched_counter(params)
-
+            set_db_cache(result)
             set_count(result)
           else
-            {:updating, pods} ->
-              Logger.info("Transaction count query is already running on pods #{Enum.join(pods, ",")}")
+            {:updating, apps} ->
+              Logger.info("Transaction count query is already running on apps: #{Enum.join(apps, ",")}")
+
+            {:fresh_db_cache, value} ->
+              set_count(result)
           end
         rescue
           e ->
             Logger.debug([
-              "Coudn't update transaction count test #{inspect(e)}"
+              "Couldn't update transaction count test #{inspect(e)}"
             ])
         end
 
@@ -71,16 +73,24 @@ defmodule Explorer.Chain.Cache.TransactionCount do
     |> System.get_env("")
     |> Integer.parse()
     |> case do
-      {integer, ""} -> :timer.seconds(integer)
-      _ -> @default_cache_period
-    end
+         {integer, ""} -> :timer.seconds(integer)
+         _ -> @default_cache_period
+       end
   end
 
+  defp set_db_cache(tx_count) do
+    params = %{
+      counter_type: "total_transaction_count",
+      value: tx_count
+    }
+
+    Chain.upsert_last_fetched_counter(params)
+  end
 
   # getting count on a large table is very expensive and so we check for a process running on the db level
   # if so, we will refuse to launch another task and simply take the current estimated value until the running process has updated
   # the db
-  defp query_db_for_running_tx_count_pids() do
+  def query_db_for_running_tx_count_pids() do
     %{rows: results} = Ecto.Adapters.SQL.query!(Explorer.Repo, "SELECT application_name, pid
             FROM pg_stat_activity
             WHERE lower(query) like 'select count%from \"transactions\"%'")
@@ -88,12 +98,29 @@ defmodule Explorer.Chain.Cache.TransactionCount do
     if length(results) == 0 do
       {:ok, :nothing_running}
     else
-      pods = results |> Enum.map(fn [_pid, podname] -> podname end)
-      {:updating, pods}
+      instances = results |> Enum.map(fn [_pid, appname] -> appname end)
+      {:running, instances}
     end
   end
 
-  defp query_db_for_exact_count() do
+  # run the count(hash) query
+  def query_db_for_exact_count() do
     Repo.aggregate(Transaction, :count, :hash, timeout: :infinity)
+  end
+
+  # check for a valid cached value
+  def query_db_for_cache() do
+    {value, how_old_ms} = from(
+                            last_fetched_counter in LastFetchedCounter,
+                            where: last_fetched_counter.counter_type == ^@transaction_counter_type,
+                            select: {last_fetched_counter.value, fragment("extract(epoch from now() - (?)", last_fetched_counter.updated_at)}
+                          ) |> Repo.one()
+
+    if how_old_ms > cache_period() do
+      Logger.info("Transaction count cache is #{how_old_ms} ms old and above cache period #{cache_period()} ms")
+      {:stale}
+    else
+      {:fresh_db_cache, value}
+    end
   end
 end
