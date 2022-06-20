@@ -51,11 +51,10 @@ defmodule BlockScoutWeb.BlockEpochTransactionController do
         {:ok, community_fund_address} = hash_to_address(community_fund_address_hash)
 
         epoch_rewards = CeloEpochRewards.get_celo_epoch_rewards_for_block(block.number)
-        {:ok, zero_wei} = Wei.cast(0)
 
         carbon_epoch_transaction = %{
           address: carbon_fund_address,
-          amount: epoch_rewards.carbon_offsetting_target_epoch_rewards || zero_wei,
+          amount: get_carbon_fund_amount(epoch_rewards),
           block_number: block.number,
           date: block.timestamp,
           type: "carbon"
@@ -63,7 +62,7 @@ defmodule BlockScoutWeb.BlockEpochTransactionController do
 
         community_epoch_transaction = %{
           address: community_fund_address,
-          amount: epoch_rewards.community_target_epoch_rewards || zero_wei,
+          amount: get_community_fund_amount(epoch_rewards),
           block_number: block.number,
           date: block.timestamp,
           type: "community"
@@ -187,5 +186,15 @@ defmodule BlockScoutWeb.BlockEpochTransactionController do
       {:error, :not_found} ->
         {:ok, true}
     end
+  end
+
+  defp get_carbon_fund_amount(epoch_rewards) do
+    {:ok, zero_wei} = Wei.cast(0)
+    epoch_rewards.carbon_offsetting_target_epoch_rewards || zero_wei
+  end
+
+  defp get_community_fund_amount(epoch_rewards) do
+    {:ok, zero_wei} = Wei.cast(0)
+    epoch_rewards.community_target_epoch_rewards || zero_wei
   end
 end
