@@ -10,7 +10,7 @@ defmodule BlockScoutWeb.BlockEpochTransactionController do
   alias BlockScoutWeb.{Controller, EpochTransactionView}
   alias Explorer.Celo.AccountReader
   alias Explorer.Chain
-  alias Explorer.Chain.{CeloElectionRewards, CeloEpochRewards}
+  alias Explorer.Chain.{CeloElectionRewards, CeloEpochRewards, Wei}
   alias Phoenix.View
 
   def index(conn, %{"block_hash_or_number" => formatted_block_hash_or_number, "type" => "JSON"} = params) do
@@ -51,10 +51,11 @@ defmodule BlockScoutWeb.BlockEpochTransactionController do
         {:ok, community_fund_address} = hash_to_address(community_fund_address_hash)
 
         epoch_rewards = CeloEpochRewards.get_celo_epoch_rewards_for_block(block.number)
+        {:ok, zero_wei} = Wei.cast(0)
 
         carbon_epoch_transaction = %{
           address: carbon_fund_address,
-          amount: epoch_rewards.carbon_offsetting_target_epoch_rewards,
+          amount: epoch_rewards.carbon_offsetting_target_epoch_rewards || zero_wei,
           block_number: block.number,
           date: block.timestamp,
           type: "carbon"
@@ -62,7 +63,7 @@ defmodule BlockScoutWeb.BlockEpochTransactionController do
 
         community_epoch_transaction = %{
           address: community_fund_address,
-          amount: epoch_rewards.community_target_epoch_rewards,
+          amount: epoch_rewards.community_target_epoch_rewards || zero_wei,
           block_number: block.number,
           date: block.timestamp,
           type: "community"
@@ -94,7 +95,6 @@ defmodule BlockScoutWeb.BlockEpochTransactionController do
         json(
           conn,
           %{
-            #            items: [carbon_epoch_transaction | epoch_transactions_json],
             items: [community_transaction_json, carbon_transaction_json] ++ epoch_transactions_json,
             next_page_path: next_page_path
           }
