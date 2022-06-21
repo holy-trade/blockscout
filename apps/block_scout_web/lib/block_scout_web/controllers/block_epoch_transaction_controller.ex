@@ -128,6 +128,7 @@ defmodule BlockScoutWeb.BlockEpochTransactionController do
          ) do
       {:ok, block} ->
         block_transaction_count = Chain.block_to_transaction_count(block.hash)
+
         epoch_transaction_count =
           if rem(block.number, 17280) == 0 do
             CeloElectionRewards.get_epoch_transaction_count_for_block(block.number)
