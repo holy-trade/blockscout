@@ -30,8 +30,8 @@
         </span>
       </span> -->
       <span class="d-flex flex-md-row flex-column mt-3 mt-md-0">
-        <span class="tile-title">
-          <%= gettext "Validator Group:" %> <%= @epoch_transaction.associated_account_name |> String.slice(0..29)  %>
+        <span class="tile-title--truncated">
+          <%= gettext "Validator Group:" %> <%= @epoch_transaction.associated_account_name %>
         </span>
       </span>
       <% end %>
@@ -41,7 +41,7 @@
         <%= get_reward_currency(@epoch_transaction.reward_type) %>
       </span>
       <span class="d-flex flex-md-row flex-column mt-3 mt-md-0">
-        <span class="tile-title">
+        <span class="tile-title--truncated">
           <%= gettext "Validator Group:" %> <%= @epoch_transaction.associated_account_name %>
         </span>
       </span>
@@ -52,7 +52,7 @@
         <%= get_reward_currency(@epoch_transaction.reward_type) %>
       </span>
       <span class="d-flex flex-md-row flex-column mt-3 mt-md-0">
-        <span class="tile-title">
+        <span class="tile-title--truncated">
           <%= gettext "Validator:" %> <%= @epoch_transaction.associated_account_name %>
         </span>
       </span>

@@ -311,6 +311,13 @@ $tile-body-a-color: #5959d8 !default;
     }
   }
 
+  .tile-title--truncated {
+    width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   &.tile-type-contract-creation {
     .tile-text-highlight {
       text-decoration: underline;
