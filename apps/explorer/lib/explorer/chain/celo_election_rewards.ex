@@ -196,6 +196,12 @@ defmodule Explorer.Chain.CeloElectionRewards do
     Repo.all(query)
   end
 
+  def get_epoch_transaction_count_for_block(block_number) do
+    query = from(reward in __MODULE__, select: count(fragment("*")), where: reward.block_number == ^block_number)
+
+    Repo.one!(query)
+  end
+
   defp extract_pagination_params(pagination_params) do
     items_count_string = Map.get(pagination_params, "items_count", "0")
     {items_count, _} = items_count_string |> Integer.parse()
