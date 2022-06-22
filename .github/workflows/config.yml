@@ -13,6 +13,8 @@ env:
   MIX_ENV: test
   OTP_VERSION: '24.1'
   ELIXIR_VERSION: '1.12.3'
+  ELIXIRC_OPTS: "--warnings-as-errors"
+  ERLC_OPTS: "warnings_as_errors"
 
 jobs:
   build-and-cache:
