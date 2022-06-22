@@ -61,10 +61,11 @@ defmodule Indexer.Fetcher.CeloElectionRewards do
         |> import_items()
       end)
 
-    if Enum.all?(response, &(&1 == :ok)) do
+    failed = Enum.filter(response, &(&1 != :ok))
+    if length(failed) == 0 do
       :ok
     else
-      {:retry, response}
+      {:retry, failed}
     end
   end
 
