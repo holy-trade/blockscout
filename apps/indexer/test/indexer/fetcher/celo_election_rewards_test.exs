@@ -38,7 +38,7 @@ defmodule Indexer.Fetcher.CeloElectionRewardsTest do
   describe "async_fetch/1" do
     setup [:save_voter_contract_events_and_start_fetcher]
 
-    test "with consensus block without reward", context do
+    test "saves voter reward to db", context do
       CeloElectionRewardsFetcher.async_fetch([
         %{
           block_number: context.last_block_in_epoch_number,
