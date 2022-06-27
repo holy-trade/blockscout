@@ -54,7 +54,7 @@ defmodule Indexer.Fetcher.CeloElectionRewards do
   def run(entries, _json_rpc_named_arguments) do
     response =
       entries
-      |> Enum.map(fn entry ->
+      |> Task.async_stream(fn entry ->
         entry
         |> get_voter_rewards()
         |> get_validator_and_group_rewards()
