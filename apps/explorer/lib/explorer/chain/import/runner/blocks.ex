@@ -12,8 +12,6 @@ defmodule Explorer.Chain.Import.Runner.Blocks do
   alias Explorer.Chain.{Block, CeloPendingEpochOperation, Import, PendingBlockOperation, Transaction}
   alias Explorer.Chain.Block.Reward
   alias Explorer.Chain.Import.Runner
-  #  alias Explorer.Chain.Import.Runner.Address.CurrentTokenBalances
-  #  alias Explorer.Chain.Import.Runner.Tokens
   alias Explorer.Repo, as: ExplorerRepo
 
   @behaviour Runner
