@@ -183,21 +183,7 @@
               <% end %>
             </dd>
           </dl>
-          <%= if assigns[:current_active_votes] && assigns[:current_active_votes] != nil do %>
-          <!-- Locked/Activated Balance -->
-          <!-- <dl class="row">
-            <dt class="col-sm-4 col-md-4 col-lg-3 text-muted">
-              <%= render BlockScoutWeb.CommonComponentsView, "_i_tooltip_2.html",
-                text: gettext("Block number in which the address was updated.") %>
-              <%= gettext("Activated Balance") %>
-            </dt>
-            <dd class="col-sm-8 col-md-8 col-lg-9">
-              <%= %Wei{value: Decimal.new(@current_active_votes)} |> Wei.to(:ether) %> <%= gettext "CELO" %>
-            </dd>
-          </dl>
-          -->
-          <% end %>
-          <%= if assigns[:rewards_sum] do %>
+          <%= if assigns[:voting_sum] do %>
           <!-- Rewards -->
           <dl class="row">
             <%= if @address.celo_account.account_type == "normal" do%>
@@ -207,17 +193,17 @@
                 <%= gettext("Lifetime Voting Rewards") %>
             </dt>
             <dd class="col-sm-8 col-md-8 col-lg-9">
-              <%= @rewards_sum |> Wei.to(:ether) |> then(&Decimal.round(&1, 2)) %> <%= gettext "CELO" %>
+              <%= wei_to_ether_rounded(@voting_sum) %> <%= gettext "CELO" %>
             </dd>
             <% end %>
             <%= if @address.celo_account.account_type == "validator" || @address.celo_account.account_type == "group" do%>
             <dt class="col-sm-4 col-md-4 col-lg-3 text-muted">
               <%= render BlockScoutWeb.CommonComponentsView, "_i_tooltip_2.html",
                 text: gettext("Validating and voting rewards accumulated over time.") %>
-              <%= gettext("Lifetime Validating Rewards | Lifetime Voting Rewards") %>
+              <%= gettext("Lifetime Validating | Voting Rewards") %>
             </dt>
             <dd class="col-sm-8 col-md-8 col-lg-9">
-              <%= elem(@rewards_sum, 0) |> Wei.to(:ether) |> then(&Decimal.round(&1, 2)) %> <%= gettext "cUSD" %> | <%= elem(@rewards_sum, 1) |> Wei.to(:ether) |> then(&Decimal.round(&1, 2)) %> <%= gettext "CELO" %>
+              <%= wei_to_ether_rounded(@validator_or_group_sum) %> <%= gettext "cUSD" %> | <%= wei_to_ether_rounded(@voting_sum) %> <%= gettext "CELO" %>
             </dd>
             <% end %>
           </dl>

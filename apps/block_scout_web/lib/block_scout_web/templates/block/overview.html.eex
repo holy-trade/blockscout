@@ -42,7 +42,7 @@
             <dt class="col-sm-3 col-lg-2 text-muted">
               <%= render BlockScoutWeb.CommonComponentsView, "_i_tooltip_2.html",
               text: gettext("The block height of a particular block is defined as the number of blocks preceding it in the blockchain.") %>
-              <%= if block_type(@block) == "Block" or @block |> block_type() |> String.contains?("Epoch") do %>
+              <%= if block_type(@block) == "Block" or Explorer.Celo.EpochUtil.is_epoch_block?(@block.number) do %>
                 <%= gettext("Block Height") %>
               <% else %>
                 <%= gettext("%{block_type} Height", block_type: block_type(@block)) %>

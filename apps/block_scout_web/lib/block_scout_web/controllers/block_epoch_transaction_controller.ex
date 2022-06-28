@@ -13,6 +13,9 @@ defmodule BlockScoutWeb.BlockEpochTransactionController do
   alias Explorer.Chain.{CeloElectionRewards, CeloEpochRewards, Wei}
   alias Phoenix.View
 
+  # The community fund address never changes, so it's ok to hard-code it.
+  @community_fund_address "0xD533Ca259b330c7A88f74E000a3FaEa2d63B7972"
+
   def index(conn, %{"block_hash_or_number" => formatted_block_hash_or_number, "type" => "JSON"} = params) do
     case param_block_hash_or_number_to_block(formatted_block_hash_or_number,
            necessity_by_association: %{
@@ -47,7 +50,8 @@ defmodule BlockScoutWeb.BlockEpochTransactionController do
         {:ok, carbon_fund_address_hash} = string_to_address_hash(carbon_fund_address_string)
         {:ok, carbon_fund_address} = hash_to_address(carbon_fund_address_hash)
 
-        {:ok, community_fund_address_hash} = string_to_address_hash("0xD533Ca259b330c7A88f74E000a3FaEa2d63B7972")
+
+        {:ok, community_fund_address_hash} = string_to_address_hash(@community_fund_address)
         {:ok, community_fund_address} = hash_to_address(community_fund_address_hash)
 
         epoch_rewards = CeloEpochRewards.get_celo_epoch_rewards_for_block(block.number)
@@ -141,6 +145,8 @@ defmodule BlockScoutWeb.BlockEpochTransactionController do
           "index.html",
           block: block,
           block_transaction_count: block_transaction_count,
+          # + 2 since we manually add the 2 fund transactions (rewards for carbon and community funds) at the top of
+          # the list.
           epoch_transaction_count: epoch_transaction_count + 2,
           current_path: Controller.current_full_path(conn)
         )

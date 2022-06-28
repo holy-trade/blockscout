@@ -20,8 +20,8 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
          {:ok, false} <- AccessHelpers.restricted_access?(address_hash_string, params) do
       paging_options_keyword = paging_options(params)
       %Explorer.PagingOptions{page_size: page_size} = Keyword.get(paging_options_keyword, :paging_options)
-      epoch_transactions_plus_one = get_rewards(address, Map.put(params, "page_size", page_size))
-      {epoch_transactions, next_page} = split_list_by_page(epoch_transactions_plus_one)
+      epoch_transactions = get_rewards(address, Map.put(params, "page_size", page_size))
+      {epoch_transactions, next_page} = split_list_by_page(epoch_transactions)
 
       next_page_path =
         case next_page_params(next_page, epoch_transactions, params) do
@@ -58,7 +58,7 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
     with {:ok, address_hash} <- Chain.string_to_address_hash(address_hash_string),
          {:ok, address} <- Chain.hash_to_address(address_hash),
          {:ok, false} <- AccessHelpers.restricted_access?(address_hash_string, params) do
-      rewards_sum = get_sums(address)
+      {validator_or_group_sum, voting_sum} = get_sums(address)
 
       render(
         conn,
@@ -68,7 +68,8 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
         current_path: Controller.current_full_path(conn),
         exchange_rate: Market.get_exchange_rate("cGLD") || Token.null(),
         counters_path: address_path(conn, :address_counters, %{"id" => address_hash_string}),
-        rewards_sum: rewards_sum,
+        validator_or_group_sum: validator_or_group_sum,
+        voting_sum: voting_sum,
         is_proxy: false
       )
     else
@@ -92,7 +93,7 @@ defmodule BlockScoutWeb.AddressEpochTransactionController do
 
   defp get_sums(address) do
     case address.celo_account.account_type do
-      "normal" -> CeloElectionRewards.get_rewards_sum_for_account(address.hash)
+      "normal" -> {nil, CeloElectionRewards.get_rewards_sum_for_account(address.hash)}
       type -> CeloElectionRewards.get_rewards_sums_for_account(address.hash, type)
     end
   end

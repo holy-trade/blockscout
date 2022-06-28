@@ -9,6 +9,7 @@ defmodule Explorer.Celo.AccountReader do
   use Bitwise
 
   import Explorer.Celo.Util
+  alias Explorer.Celo.EpochUtil
 
   def account_data(%{address: account_address}) do
     data = fetch_account_data(account_address)
@@ -138,7 +139,7 @@ defmodule Explorer.Celo.AccountReader do
         stable_usd_total_supply: stable_usd_total_supply,
         block_hash: block_hash,
         block_number: bn,
-        epoch_number: epoch_by_block_number(bn)
+        epoch_number: EpochUtil.epoch_by_block_number(bn)
       }
 
       if bn <= 155_520 do
