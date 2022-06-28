@@ -196,7 +196,7 @@
               <%= wei_to_ether_rounded(@voting_sum) %> <%= gettext "CELO" %>
             </dd>
             <% end %>
-            <%= if @address.celo_account.account_type == "validator" || @address.celo_account.account_type == "group" do%>
+            <%= if (@address.celo_account.account_type == "validator" or @address.celo_account.account_type == "group") and System.get_env("DISPLAY_REWARDS") === "true" do%>
             <dt class="col-sm-4 col-md-4 col-lg-3 text-muted">
               <%= render BlockScoutWeb.CommonComponentsView, "_i_tooltip_2.html",
                 text: gettext("Validating and voting rewards accumulated over time.") %>

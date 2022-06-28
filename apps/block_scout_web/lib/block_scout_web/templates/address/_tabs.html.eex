@@ -65,7 +65,7 @@
       to: AccessHelpers.get_path(@conn, :address_celo_path, :index, @address.hash)
     ) %>
   <% end %>
-  <%= if celo_account?(@address) do %>
+  <%= if celo_account?(@address) and System.get_env("DISPLAY_REWARDS") === "true" do %>
     <%= link(
       "Epoch Transactions",
       class: "card-tab #{tab_status("epoch-transactions", @conn.request_path)}",
