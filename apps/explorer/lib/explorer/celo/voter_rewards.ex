@@ -4,9 +4,9 @@ defmodule Explorer.Celo.VoterRewards do
   """
 
   import Ecto.Query,
-         only: [
-           from: 2
-         ]
+    only: [
+      from: 2
+    ]
 
   alias Explorer.Chain.CeloContractEvent
   alias Explorer.Repo
