@@ -41,14 +41,15 @@ defmodule BlockScoutWeb.BlockEpochTransactionController do
               block_epoch_transaction_path(conn, :index, block, Map.delete(next_page_params, "type"))
           end
 
-        carbon_fund_address_string =
+        carbon_fund_address =
           case AccountReader.get_carbon_offsetting_partner(block.number) do
-            {:ok, address_string} -> address_string
-            :error -> "0x0ba9f5B3CdD349aB65a8DacDA9A38Bc525C2e6D6"
+            {:ok, address_string} ->
+              {:ok, carbon_fund_address_hash} = string_to_address_hash(address_string)
+              {:ok, carbon_fund_address} = hash_to_address(carbon_fund_address_hash)
+              carbon_fund_address
+            :error -> :error
           end
 
-        {:ok, carbon_fund_address_hash} = string_to_address_hash(carbon_fund_address_string)
-        {:ok, carbon_fund_address} = hash_to_address(carbon_fund_address_hash)
 
 
         {:ok, community_fund_address_hash} = string_to_address_hash(@community_fund_address)
