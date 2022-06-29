@@ -1,11 +1,10 @@
 <% burned_fee = if !is_nil(@block.base_fee_per_gas), do: Wei.mult(@block.base_fee_per_gas, BlockBurnedFeeCounter.fetch(@block.hash)), else: nil %>
 <% priority_fee = if !is_nil(@block.base_fee_per_gas), do: BlockPriorityFeeCounter.fetch(@block.hash), else: nil %>
 <section>
-  <%= render BlockScoutWeb.Advertisement.TextAdView, "index.html", conn: @conn %>
   <div class="row">
-    <div class="col-md-12 js-ad-dependant-mb-2">
+    <div class="col-md-12 mb-2">
       <!-- Block Details -->
-      <div class="card js-ad-dependant-mb-2">
+      <div class="card mb-2">
         <div class="card-body fs-14" style="line-height: 32px;">
           <dl class="pagination-container">
             <h1 class="card-title" data-test="detail_type">
@@ -43,7 +42,7 @@
             <dt class="col-sm-3 col-lg-2 text-muted">
               <%= render BlockScoutWeb.CommonComponentsView, "_i_tooltip_2.html",
               text: gettext("The block height of a particular block is defined as the number of blocks preceding it in the blockchain.") %>
-              <%= if block_type(@block) == "Block" or @block |> block_type() |> String.contains?("Epoch") do %>
+              <%= if block_type(@block) == "Block" or Explorer.Celo.EpochUtil.is_epoch_block?(@block.number) do %>
                 <%= gettext("Block Height") %>
               <% else %>
                 <%= gettext("%{block_type} Height", block_type: block_type(@block)) %>
@@ -84,7 +83,7 @@
             </dd>
           </dl>
           <!-- # of Epoch Transactions -->
-          <%= if @block |> block_type() |> String.contains?("Epoch") do %>
+          <%= if Explorer.Celo.EpochUtil.is_epoch_block?(@block.number) and System.get_env("DISPLAY_REWARDS") === "true" do %>
           <dl class="row">
             <dt class="col-sm-3 col-lg-2 text-muted">
               <%= render BlockScoutWeb.CommonComponentsView, "_i_tooltip_2.html",
@@ -93,11 +92,7 @@
             </dt>
             <dd class="col-sm-9 col-lg-10">
               <a href="#a.card-tab" class="page-link bs-label large btn-no-border-link-to-tems">
-                <%= if @block_transaction_count == 1 do %>
-                  <%= gettext "%{count} Epoch Transaction", count: @epoch_transaction_count %>
-                <% else %>
-                  <%= gettext "%{count} Epoch Transactions", count: @epoch_transaction_count %>
-                <% end %>
+                <%= gettext "%{count} Epoch Transactions", count: @epoch_transaction_count %>
               </a>
             </dd>
           </dl>
@@ -317,5 +312,3 @@
       </div>
     </div>
 </section>
-
-<%= render BlockScoutWeb.Advertisement.BannersAdView, "_banner_728.html", conn: @conn %>

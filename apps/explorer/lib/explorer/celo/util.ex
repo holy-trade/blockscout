@@ -2,21 +2,10 @@ defmodule Explorer.Celo.Util do
   @moduledoc """
   Utilities for reading from Celo smart contracts
   """
-  import Ecto.Query,
-    only: [
-      from: 2,
-      limit: 2,
-      reverse_order: 1,
-      where: 3
-    ]
 
   require Logger
-  alias Explorer.Celo.{AbiHandler, AddressCache, ContractEvents}
-  alias Explorer.Chain.{Block, CeloContractEvent}
+  alias Explorer.Celo.{AbiHandler, AddressCache}
   alias Explorer.SmartContract.Reader
-
-  alias ContractEvents.Common
-  alias ContractEvents.Validators.ValidatorEpochPaymentDistributedEvent
 
   @celo_token_contract_symbols %{
     "stableToken" => "cUSD",
@@ -99,94 +88,4 @@ defmodule Explorer.Celo.Util do
         @celo_token_contract_symbols[name]
     end
   end
-
-  def epoch_by_block_number(bn) do
-    div(bn, 17_280)
-  end
-
-  def add_input_account_to_individual_rewards_and_calculate_sum(reward_lists_chunked_by_account, key) do
-    reward_lists_chunked_by_account
-    |> Enum.map(fn x ->
-      Map.put(
-        x,
-        :rewards,
-        Enum.map(x.rewards, fn reward ->
-          Map.put(reward, key, Map.get(x, key))
-        end)
-      )
-    end)
-    |> Enum.reduce([], fn curr, acc ->
-      [curr.rewards | acc]
-    end)
-    |> List.flatten()
-    |> Enum.sort_by(& &1.epoch_number)
-    |> Enum.map_reduce(0, fn x, acc -> {x, acc + x.amount} end)
-  end
-
-  def set_default_from_and_to_dates_when_nil(from_date, to_date) do
-    from_date =
-      case from_date do
-        nil -> ~U[2020-04-22 16:00:00.000000Z]
-        from_date -> from_date
-      end
-
-    to_date =
-      case to_date do
-        nil -> DateTime.utc_now()
-        to_date -> to_date
-      end
-
-    {from_date, to_date}
-  end
-
-  def base_query(from_date, to_date, fetch_for_validator_or_group) do
-    validator_epoch_payment_distributed = ValidatorEpochPaymentDistributedEvent.topic()
-    payment_param = fetch_for_validator_or_group <> "_payment"
-
-    decimal_zero = Decimal.new(0)
-
-    from(event in CeloContractEvent,
-      inner_join: block in Block,
-      on: event.block_number == block.number,
-      select: %{
-        amount: json_extract_path(event.params, [^payment_param]),
-        date: block.timestamp,
-        block_number: block.number,
-        block_hash: block.hash,
-        group: json_extract_path(event.params, ["group"]),
-        validator: json_extract_path(event.params, ["validator"])
-      },
-      order_by: [asc: block.number],
-      where: event.topic == ^validator_epoch_payment_distributed,
-      where: block.timestamp >= ^from_date,
-      where: block.timestamp < ^to_date,
-      where: type(json_extract_path(event.params, [^payment_param]), :decimal) != ^decimal_zero
-    )
-  end
-
-  def structure_rewards(raw_rewards) do
-    raw_rewards
-    |> Enum.map(fn x ->
-      Map.merge(
-        x,
-        %{
-          epoch_number: epoch_by_block_number(x.block_number),
-          group: Common.ca(x.group),
-          validator: Common.ca(x.validator)
-        }
-      )
-    end)
-    |> Enum.map_reduce(0, fn x, acc -> {x, acc + x.amount} end)
-  end
-
-  def last_rewards(query, [] = _params), do: query
-
-  def last_rewards(query, %{"items_count" => limit, "epoch_number" => latest_epoch_number}) do
-    query
-    |> reverse_order()
-    |> limit(^limit + 1)
-    |> where([_event, block, _account], block.number < ^latest_epoch_number * 17280)
-  end
-
-  def last_rewards(query, %{"address_id" => _, "type" => _}), do: query |> reverse_order()
 end

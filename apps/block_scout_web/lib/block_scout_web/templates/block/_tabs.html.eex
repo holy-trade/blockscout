@@ -6,7 +6,7 @@
             to: block_transaction_path(@conn, :index, @conn.params["block_hash_or_number"])
             )
         %>
-  <%= if rem(@conn.assigns.block.number, 17280) == 0 do %>
+  <%= if EpochUtil.is_epoch_block?(@conn.assigns.block.number) and System.get_env("DISPLAY_REWARDS") === "true" do %>
   <%=
           link(
             gettext("Epoch Transactions"),

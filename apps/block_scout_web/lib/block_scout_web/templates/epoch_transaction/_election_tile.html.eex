@@ -6,13 +6,12 @@
     <!-- Color Block -->
     <div class="tile-transaction-type-block col-md-2 d-flex flex-row flex-md-column">
       <span class="tile-label">
-        <%= if @epoch_transaction.reward_type == "voter" do%>
-          <%= gettext("Voting Rewards") %>
-        <% end %>
-        <%= if @epoch_transaction.reward_type == "validator" do%>
-          <%= gettext("Validator Rewards") %>
-        <% end %>
-        <%= if @epoch_transaction.reward_type == "group" do%>
+        <%= case @epoch_transaction.reward_type do %>
+          <% "voter" -> %>
+            <%= gettext("Voting Rewards") %>
+          <% "validator" -> %>
+            <%= gettext("Validator Rewards") %>
+          <% "group" -> %>
           <%= gettext("Validator Group Rewards") %>
         <% end %>
       </span>
@@ -22,13 +21,8 @@
     <div class="col-md-7 col-lg-8 d-flex flex-column pr-2 pr-sm-2 pr-md-0">
       <%= if @epoch_transaction.reward_type == "voter" do%>
       <span class="bs-label reward font-weight-bold">
-        <%= gettext "Rewards: " %> <%= @epoch_transaction.amount |> Wei.to(:ether) %> <%= gettext "CELO" %>
+        <%= gettext "Rewards: " %> <%= wei_to_ether_rounded(@epoch_transaction.amount) %> <%= gettext "CELO" %>
       </span>
-      <!-- <span class="d-flex flex-md-row flex-column mt-3 mt-md-0">
-        <span class="tile-title mt-1">
-          <%= gettext "Active votes:" %> <%= @epoch_transaction.amount |> Wei.to(:ether) %> <%= gettext "CELO" %>
-        </span>
-      </span> -->
       <span class="d-flex flex-md-row flex-column mt-3 mt-md-0">
         <span class="tile-title--truncated">
           <%= gettext "Validator Group:" %> <%= @epoch_transaction.associated_account_name %>
@@ -37,7 +31,7 @@
       <% end %>
       <%= if @epoch_transaction.reward_type == "validator" do%>
       <span class="bs-label reward font-weight-bold">
-        <%= gettext "Rewards: " %> <%= @epoch_transaction.amount |> Wei.to(:ether) |> then(&Decimal.round(&1, 2)) %>
+        <%= gettext "Rewards: " %> <%= wei_to_ether_rounded(@epoch_transaction.amount) %>
         <%= get_reward_currency(@epoch_transaction.reward_type) %>
       </span>
       <span class="d-flex flex-md-row flex-column mt-3 mt-md-0">
@@ -48,7 +42,7 @@
       <% end %>
       <%= if @epoch_transaction.reward_type == "group" do%>
       <span class="bs-label reward font-weight-bold">
-        <%= gettext "Rewards: " %> <%= @epoch_transaction.amount |> Wei.to(:ether) |> then(&Decimal.round(&1, 2)) %>
+        <%= gettext "Rewards: " %> <%= wei_to_ether_rounded(@epoch_transaction.amount) %>
         <%= get_reward_currency(@epoch_transaction.reward_type) %>
       </span>
       <span class="d-flex flex-md-row flex-column mt-3 mt-md-0">
@@ -61,7 +55,7 @@
     <!-- Block info -->
     <div class="col-md-3 col-lg-2 d-flex flex-row flex-md-column flex-nowrap justify-content-center text-md-right mt-3 mt-md-0">
       <span class="mr-2 mr-md-0 order-1">
-        <%= gettext "Epoch #" %> <%= Util.epoch_by_block_number(@epoch_transaction.block_number) %>
+        <%= gettext "Epoch #" %> <%= EpochUtil.epoch_by_block_number(@epoch_transaction.block_number) %>
       </span>
       <span class="mr-2 mr-md-0 order-1">
         <%= link(

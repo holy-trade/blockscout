@@ -8,7 +8,7 @@ defmodule Explorer.Celo.AccountReader do
 
   use Bitwise
 
-  import Explorer.Celo.Util
+  import Explorer.Celo.{EpochUtil, Util}
 
   def account_data(%{address: account_address}) do
     data = fetch_account_data(account_address)

@@ -1,7 +1,7 @@
 defmodule BlockScoutWeb.EpochTransactionView do
   use BlockScoutWeb, :view
 
-  alias Explorer.Celo.Util
+  alias Explorer.Celo.EpochUtil
   alias Explorer.Chain.Wei
 
   def get_reward_currency(reward_type) do
@@ -10,4 +10,6 @@ defmodule BlockScoutWeb.EpochTransactionView do
       _ -> "cUSD"
     end
   end
+
+  def wei_to_ether_rounded(amount), do: amount |> Wei.to(:ether) |> then(&Decimal.round(&1, 2))
 end

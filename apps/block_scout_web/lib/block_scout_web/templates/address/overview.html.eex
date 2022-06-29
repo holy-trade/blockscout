@@ -1,14 +1,13 @@
 <section class="address-overview" data-page="address-details" data-page-address-hash="<%= @address.hash %>" data-async-counters="<%= @counters_path %>">
-  <%= render BlockScoutWeb.Advertisement.TextAdView, "index.html", conn: @conn %>
   <% dark_forest_addresses_list_0_4 = CustomContractsHelpers.get_custom_addresses_list(:dark_forest_addresses) %>
   <% dark_forest_addresses_list_0_5 = CustomContractsHelpers.get_custom_addresses_list(:dark_forest_addresses_v_0_5) %>
   <% circles_addresses_list = CustomContractsHelpers.get_custom_addresses_list(:circles_addresses) %>
   <% current_address = "0x" <> Base.encode16(@address.hash.bytes, case: :lower) %>
   <% created_from_address_hash = if from_address_hash(@address), do: "0x" <> Base.encode16(from_address_hash(@address).bytes, case: :lower), else: nil %>
-  <div class="row js-ad-dependant-mb-2 js-ad-dependant-mb-5-reverse">
+  <div class="row mb-2 mb-5">
     <!-- Address details -->
-    <div class="col-md-12 js-ad-dependant-mb-2">
-      <div class="card js-ad-dependant-mb-2">
+    <div class="col-md-12 mb-2">
+      <div class="card mb-2">
         <div class="card-body fs-14" style="line-height: 31px;">
           <%= cond do %>
             <% Enum.member?(dark_forest_addresses_list_0_4, current_address) -> %>
@@ -184,21 +183,7 @@
               <% end %>
             </dd>
           </dl>
-          <%= if assigns[:current_active_votes] && assigns[:current_active_votes] != nil do %>
-          <!-- Locked/Activated Balance -->
-          <!-- <dl class="row">
-            <dt class="col-sm-4 col-md-4 col-lg-3 text-muted">
-              <%= render BlockScoutWeb.CommonComponentsView, "_i_tooltip_2.html",
-                text: gettext("Block number in which the address was updated.") %>
-              <%= gettext("Activated Balance") %>
-            </dt>
-            <dd class="col-sm-8 col-md-8 col-lg-9">
-              <%= %Wei{value: Decimal.new(@current_active_votes)} |> Wei.to(:ether) %> <%= gettext "CELO" %>
-            </dd>
-          </dl>
-          -->
-          <% end %>
-          <%= if assigns[:rewards_sum] do %>
+          <%= if assigns[:voting_sum] do %>
           <!-- Rewards -->
           <dl class="row">
             <%= if @address.celo_account.account_type == "normal" do%>
@@ -208,17 +193,17 @@
                 <%= gettext("Lifetime Voting Rewards") %>
             </dt>
             <dd class="col-sm-8 col-md-8 col-lg-9">
-              <%= @rewards_sum |> Wei.to(:ether) |> then(&Decimal.round(&1, 2)) %> <%= gettext "CELO" %>
+              <%= wei_to_ether_rounded(@voting_sum) %> <%= gettext "CELO" %>
             </dd>
             <% end %>
-            <%= if @address.celo_account.account_type == "validator" || @address.celo_account.account_type == "group" do%>
+            <%= if (@address.celo_account.account_type == "validator" or @address.celo_account.account_type == "group") and System.get_env("DISPLAY_REWARDS") === "true" do%>
             <dt class="col-sm-4 col-md-4 col-lg-3 text-muted">
               <%= render BlockScoutWeb.CommonComponentsView, "_i_tooltip_2.html",
                 text: gettext("Validating and voting rewards accumulated over time.") %>
-              <%= gettext("Lifetime Validating Rewards | Lifetime Voting Rewards") %>
+              <%= gettext("Lifetime Validating | Voting Rewards") %>
             </dt>
             <dd class="col-sm-8 col-md-8 col-lg-9">
-              <%= elem(@rewards_sum, 0) |> Wei.to(:ether) |> then(&Decimal.round(&1, 2)) %> <%= gettext "cUSD" %> | <%= elem(@rewards_sum, 1) |> Wei.to(:ether) |> then(&Decimal.round(&1, 2)) %> <%= gettext "CELO" %>
+              <%= wei_to_ether_rounded(@validator_or_group_sum) %> <%= gettext "cUSD" %> | <%= wei_to_ether_rounded(@voting_sum) %> <%= gettext "CELO" %>
             </dd>
             <% end %>
           </dl>
@@ -322,5 +307,3 @@
 <%= if validator_metadata do %>
   <%= render BlockScoutWeb.AddressView, "_validator_metadata_modal.html", address_name: address_name, validator_metadata: validator_metadata %>
 <% end %>
-
-<%= render BlockScoutWeb.Advertisement.BannersAdView, "_banner_728.html", conn: @conn %>
