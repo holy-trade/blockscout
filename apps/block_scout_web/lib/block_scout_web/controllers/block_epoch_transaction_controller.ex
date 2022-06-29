@@ -8,7 +8,7 @@ defmodule BlockScoutWeb.BlockEpochTransactionController do
     only: [hash_to_block: 2, number_to_block: 2, string_to_address_hash: 1, string_to_block_hash: 1, hash_to_address: 1]
 
   alias BlockScoutWeb.{Controller, EpochTransactionView}
-  alias Explorer.Celo.AccountReader
+  alias Explorer.Celo.{AccountReader, EpochUtil}
   alias Explorer.Chain
   alias Explorer.Chain.{CeloElectionRewards, CeloEpochRewards, Wei}
   alias Phoenix.View
@@ -135,7 +135,7 @@ defmodule BlockScoutWeb.BlockEpochTransactionController do
         block_transaction_count = Chain.block_to_transaction_count(block.hash)
 
         epoch_transaction_count =
-          if rem(block.number, 17280) == 0 do
+          if EpochUtil.is_epoch_block?(block.number) do
             CeloElectionRewards.get_epoch_transaction_count_for_block(block.number)
           else
             0
