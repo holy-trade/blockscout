@@ -43,6 +43,7 @@ defmodule BlockScoutWeb.WebRouter do
 
     resources "/blocks", BlockController, only: [:show], param: "hash_or_number" do
       resources("/transactions", BlockTransactionController, only: [:index], as: :transaction)
+      resources("/epoch-transactions", BlockEpochTransactionController, only: [:index], as: :epoch_transaction)
       resources("/signers", BlockSignersController, only: [:index], as: :signers)
     end
 
@@ -110,6 +111,13 @@ defmodule BlockScoutWeb.WebRouter do
       )
 
       resources(
+        "/epoch-transactions",
+        AddressEpochTransactionController,
+        only: [:index],
+        as: :epoch_transaction
+      )
+
+      resources(
         "/signed",
         AddressSignedController,
         only: [:index],
@@ -168,28 +176,28 @@ defmodule BlockScoutWeb.WebRouter do
       resources(
         "/read-contract",
         AddressReadContractController,
-        only: [:index, :show],
+        only: [:index],
         as: :read_contract
       )
 
       resources(
         "/read-proxy",
         AddressReadProxyController,
-        only: [:index, :show],
+        only: [:index],
         as: :read_proxy
       )
 
       resources(
         "/write-contract",
         AddressWriteContractController,
-        only: [:index, :show],
+        only: [:index],
         as: :write_contract
       )
 
       resources(
         "/write-proxy",
         AddressWriteProxyController,
-        only: [:index, :show],
+        only: [:index],
         as: :write_proxy
       )
 

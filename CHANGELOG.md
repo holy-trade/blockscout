@@ -15,6 +15,7 @@
 ### Chore
 - [#5053](https://github.com/blockscout/blockscout/pull/5053) - Update ex_keccak lib
 - [#4781](https://github.com/blockscout/blockscout/pull/4781) - PGAnalyze index suggestions
+- [#5679](https://github.com/blockscout/blockscout/pull/5679) - Optimize query in fetch_min_missing_block_cache function
 
 ## 4.1.0-beta
 
@@ -55,7 +56,6 @@
 - [#4777](https://github.com/blockscout/blockscout/pull/4777), [#4791](https://github.com/blockscout/blockscout/pull/4791), [#4799](https://github.com/blockscout/blockscout/pull/4799), [#4847](https://github.com/blockscout/blockscout/pull/4847) - Added decoding revert reason
 - [#4776](https://github.com/blockscout/blockscout/pull/4776) - Added view for unsuccessfully fetched values from read functions
 - [#4761](https://github.com/blockscout/blockscout/pull/4761) - ERC-1155 support
->>>>>>> 2b3045bcb (Fix bugs and improve contract interactions)
 - [#4739](https://github.com/blockscout/blockscout/pull/4739) - Improve logs and inputs decoding
 - [#4747](https://github.com/blockscout/blockscout/pull/4747) - Advanced CSV export
 - [#4745](https://github.com/blockscout/blockscout/pull/4745) - Vyper contracts verification
@@ -1466,3 +1466,4 @@ Reverting of synchronous block counter, implemented in #1848
  - [https://github.com/blockscout/blockscout/pull/1532](https://github.com/blockscout/blockscout/pull/1532) - Upgrade elixir to 1.8.1
  - [https://github.com/blockscout/blockscout/pull/1553](https://github.com/blockscout/blockscout/pull/1553) - Dockerfile: remove 1.7.1 version pin FROM bitwalker/alpine-elixir-phoenix
  - [https://github.com/blockscout/blockscout/pull/1465](https://github.com/blockscout/blockscout/pull/1465) - Resolve lodash security alert
+ 
