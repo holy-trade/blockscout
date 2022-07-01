@@ -392,7 +392,9 @@ defmodule Explorer.Etherscan do
         }
       )
 
-    Repo.all(query)
+    tokens = Repo.all(query)
+
+    tokens
     |> Enum.map(fn item ->
       %{item | decimals: if(not is_nil(item.id) && item.type == "ERC-1155", do: "", else: item.decimals)}
     end)
