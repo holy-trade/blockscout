@@ -44,7 +44,11 @@
           <p class="mb-0 <%= col_md %> ">
             <%= if token_balance.token_type == "ERC-721" && !is_nil(token_balance.token_id) do %>
               1
-            <% else %>
+            <% end %>
+            <%= if token_balance.token_type == "ERC-1155" && !is_nil(token_balance.token_id) do %>
+              <%= token_balance.value %> <%= token_symbol(token_balance.token) %>
+            <% end %>
+            <%= if is_nil(token_balance.token_id) do %>
               <%= format_according_to_decimals(token_balance.value, token_balance.token.decimals) %> <%= token_symbol(token_balance.token) %>
             <% end %>
             <%= if (token_balance.token_type == "ERC-721" && !is_nil(token_balance.token_id)) or token_balance.token_type == "ERC-1155" do %>

@@ -387,12 +387,15 @@ defmodule Explorer.Etherscan do
           name: t.name,
           decimals: t.decimals,
           symbol: t.symbol,
-          type: t.type,
+          type: ctb.token_type,
           id: ctb.token_id
         }
       )
 
     Repo.all(query)
+    |> Enum.map(fn item ->
+      %{item | decimals: if(not is_nil(item.id) && item.type == "ERC-1155", do: "", else: item.decimals)}
+    end)
   end
 
   @transaction_fields ~w(
