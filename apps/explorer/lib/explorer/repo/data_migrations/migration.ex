@@ -15,6 +15,8 @@ defmodule Explorer.Repo.Migrations.DataMigration do
       use Ecto.Migration
       alias Explorer.Celo.ContractEvents.EventMap
       alias Explorer.Celo.Telemetry
+      alias Explorer.Chain.CeloContractEvent
+      alias Explorer.Chain.Hash.{Address, Full}
       import Ecto.Query
 
       @disable_ddl_transaction true
@@ -82,8 +84,8 @@ defmodule Explorer.Repo.Migrations.DataMigration do
       defp event_page_query({last_block_number, last_index}) do
         from(
           l in "logs",
-          left_join: e in "celo_contract_events",
-          on: e.topic == l.first_topic and e.block_number == l.block_number and e.log_index == l.index,
+          inner_join: ccc in "celo_core_contracts",
+          on: ccc.address_hash == l.address_hash,
           select: %{
             first_topic: l.first_topic,
             second_topic: l.second_topic,
@@ -95,9 +97,7 @@ defmodule Explorer.Repo.Migrations.DataMigration do
             block_number: l.block_number,
             index: l.index
           },
-          where:
-            is_nil(e.topic) and l.first_topic in ^@topics and
-              {l.block_number, l.index} > {^last_block_number, ^last_index},
+          where: l.first_topic in ^@topics and {l.block_number, l.index} > {^last_block_number, ^last_index},
           order_by: [asc: l.block_number, asc: l.index],
           limit: @batch_size
         )
@@ -133,17 +133,21 @@ defmodule Explorer.Repo.Migrations.DataMigration do
           end)
 
         {inserted_count, results} =
-          Explorer.Repo.insert_all("celo_contract_events", params, returning: [:block_number, :log_index])
+          Explorer.Repo.insert_all("celo_contract_events", params,
+            returning: [:block_number, :log_index],
+            on_conflict: CeloContractEvent.default_upsert(),
+            conflict_target: CeloContractEvent.conflict_target()
+          )
 
         if inserted_count != length(to_change) do
           not_inserted =
             to_change
-            |> Enum.map(&Map.take(&1, [:block_number, :log_index]))
+            |> Enum.map(&Map.take(&1, [:block_number, :index]))
             |> MapSet.new()
             |> MapSet.difference(MapSet.new(results))
             |> MapSet.to_list()
 
-          not_inserted |> Enum.each(&handle_failure/1)
+          not_inserted |> handle_non_insert()
         end
 
         last_key =

@@ -80,7 +80,7 @@ defmodule BlockScoutWeb.Notifier do
   end
 
   def handle_event({:chain_event, :exchange_rate}) do
-    exchange_rate = ExchangeRates.lookup("cGLD") || Token.null()
+    exchange_rate = ExchangeRates.lookup(Explorer.coin()) || Token.null()
 
     market_history_data =
       case Market.fetch_recent_history() do
@@ -94,7 +94,7 @@ defmodule BlockScoutWeb.Notifier do
           %{exchange_rate | available_supply: nil, market_cap_usd: RSK.market_cap(exchange_rate)}
 
         _ ->
-          exchange_rate
+          Map.from_struct(exchange_rate)
       end
 
     Endpoint.broadcast("exchange_rate:new_rate", "new_rate", %{
@@ -203,7 +203,7 @@ defmodule BlockScoutWeb.Notifier do
       "balance_update",
       %{
         address: address,
-        exchange_rate: Market.get_exchange_rate("cGLD") || Token.null()
+        exchange_rate: Market.get_exchange_rate(Explorer.coin()) || Token.null()
       }
     )
   end

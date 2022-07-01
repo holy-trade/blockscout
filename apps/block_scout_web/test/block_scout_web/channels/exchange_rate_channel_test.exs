@@ -28,7 +28,7 @@ defmodule BlockScoutWeb.ExchangeRateChannelTest do
       last_updated: DateTime.utc_now(),
       market_cap_usd: Decimal.new("1000000.0"),
       name: "test",
-      symbol: "cGLD",
+      symbol: "CELO",
       usd_value: Decimal.new("2.5"),
       volume_24h_usd: Decimal.new("1000.0")
     }
@@ -53,7 +53,7 @@ defmodule BlockScoutWeb.ExchangeRateChannelTest do
 
       receive do
         %Phoenix.Socket.Broadcast{topic: ^topic, event: "new_rate", payload: payload} ->
-          assert payload.exchange_rate == token
+          assert payload.exchange_rate == Map.from_struct(token)
           assert payload.market_history_data == []
       after
         :timer.seconds(5) ->
@@ -89,7 +89,7 @@ defmodule BlockScoutWeb.ExchangeRateChannelTest do
 
       receive do
         %Phoenix.Socket.Broadcast{topic: ^topic, event: "new_rate", payload: payload} ->
-          assert payload.exchange_rate == token
+          assert payload.exchange_rate == Map.from_struct(token)
           assert payload.market_history_data == records
       after
         :timer.seconds(5) ->

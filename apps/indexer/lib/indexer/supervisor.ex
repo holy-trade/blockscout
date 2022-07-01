@@ -5,6 +5,8 @@ defmodule Indexer.Supervisor do
 
   use Supervisor
 
+  alias Explorer.Celo.InternalTransactionCache
+
   alias Explorer.Chain
 
   alias Indexer.{
@@ -21,6 +23,7 @@ defmodule Indexer.Supervisor do
   alias Indexer.Fetcher.{
     BlockReward,
     CeloAccount,
+    CeloElectionRewards,
     CeloEpochRewards,
     CeloMaterializedViewRefresh,
     CeloUnlocked,
@@ -28,10 +31,10 @@ defmodule Indexer.Supervisor do
     CeloValidatorGroup,
     CeloValidatorHistory,
     CeloVoters,
-    CeloVoterVotes,
     CoinBalance,
     CoinBalanceOnDemand,
     ContractCode,
+    EmptyBlocksSanitizer,
     InternalTransaction,
     PendingTransaction,
     ReplacedTransaction,
@@ -137,6 +140,7 @@ defmodule Indexer.Supervisor do
 
       # Out-of-band fetchers
       {CoinBalanceOnDemand.Supervisor, [json_rpc_named_arguments]},
+      {EmptyBlocksSanitizer.Supervisor, [[json_rpc_named_arguments: json_rpc_named_arguments]]},
       {TokenTotalSupplyOnDemand.Supervisor, [json_rpc_named_arguments]},
       {PendingTransactionsSanitizer, [[json_rpc_named_arguments: json_rpc_named_arguments]]},
 
@@ -156,13 +160,14 @@ defmodule Indexer.Supervisor do
        [[json_rpc_named_arguments: json_rpc_named_arguments, memory_monitor: memory_monitor]]},
       {CeloValidatorHistory.Supervisor,
        [[json_rpc_named_arguments: json_rpc_named_arguments, memory_monitor: memory_monitor]]},
-      {CeloEpochRewards.Supervisor,
+      {CeloElectionRewards.Supervisor,
        [[json_rpc_named_arguments: json_rpc_named_arguments, memory_monitor: memory_monitor]]},
-      {CeloVoterVotes.Supervisor,
+      {CeloEpochRewards.Supervisor,
        [[json_rpc_named_arguments: json_rpc_named_arguments, memory_monitor: memory_monitor]]},
       {CeloUnlocked.Supervisor, [[json_rpc_named_arguments: json_rpc_named_arguments, memory_monitor: memory_monitor]]},
       {CeloVoters.Supervisor, [[json_rpc_named_arguments: json_rpc_named_arguments, memory_monitor: memory_monitor]]},
-      {CeloMaterializedViewRefresh, [[], []]}
+      {CeloMaterializedViewRefresh, [[], []]},
+      {InternalTransactionCache, [[], []]}
     ]
 
     fetchers_with_bridged_tokens =

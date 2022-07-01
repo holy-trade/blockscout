@@ -9,7 +9,6 @@ defmodule Explorer.Chain.Block do
 
   alias Explorer.Chain.{
     Address,
-    CeloPendingEpochOperation,
     CeloSigners,
     CeloValidatorHistory,
     Data,
@@ -81,7 +80,8 @@ defmodule Explorer.Chain.Block do
           round: non_neg_integer(),
           extra_data: Data.t(),
           online: %Ecto.Association.NotLoaded{} | boolean(),
-          base_fee_per_gas: Wei.t()
+          base_fee_per_gas: Wei.t(),
+          is_empty: boolean()
         }
 
   @primary_key {:hash, Hash.Full, autogenerate: false}
@@ -100,6 +100,7 @@ defmodule Explorer.Chain.Block do
     field(:round, :integer)
     field(:extra_data, Data)
     field(:base_fee_per_gas, Wei)
+    field(:is_empty, :boolean)
 
     timestamps()
 
@@ -119,7 +120,6 @@ defmodule Explorer.Chain.Block do
     has_many(:rewards, Reward, foreign_key: :block_hash)
 
     has_one(:pending_operations, PendingBlockOperation, foreign_key: :block_hash)
-    has_one(:celo_pending_epoch_operations, CeloPendingEpochOperation, foreign_key: :block_hash)
     has_one(:celo_delegator, CeloSigners, foreign_key: :signer, references: :miner_hash)
     has_one(:online, CeloValidatorHistory, foreign_key: :block_number, references: :number)
     has_many(:signers, CeloValidatorHistory, foreign_key: :block_number, references: :number)
@@ -168,7 +168,7 @@ defmodule Explorer.Chain.Block do
   """
   def block_type_filter(query, "Block"), do: where(query, [block], block.consensus == true)
 
-  def block_type_filter(query, "Reorg") do
+  def block_type_filter(query, "Fetching") do
     query
     |> join(:left, [block], uncles in assoc(block, :nephew_relations))
     |> where([block, uncles], block.consensus == false and is_nil(uncles.uncle_hash))

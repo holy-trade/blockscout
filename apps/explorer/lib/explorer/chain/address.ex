@@ -92,6 +92,7 @@ defmodule Explorer.Chain.Address do
              :celo_delegator,
              :celo_signers,
              :celo_members,
+             :celo_unlocked,
              :celo_voters,
              :celo_voted,
              :celo_claims,
@@ -295,6 +296,23 @@ defmodule Explorer.Chain.Address do
       select: fragment("COUNT(*)")
     )
   end
+
+  def contract_code_md5(%__MODULE__{contract_code: %Data{bytes: contract_code_bytes}}),
+    do: contract_code_md5(contract_code_bytes)
+
+  def contract_code_md5(contract_code_bytes) when is_binary(contract_code_bytes),
+    do:
+      Base.encode16(
+        :crypto.hash(
+          :md5,
+          "\\x" <>
+            Base.encode16(
+              contract_code_bytes,
+              case: :lower
+            )
+        ),
+        case: :lower
+      )
 
   defimpl String.Chars do
     @doc """

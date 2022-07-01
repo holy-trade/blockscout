@@ -9,6 +9,7 @@ defmodule Explorer.Chain.Import.Runner.Blocks do
   import Ecto.Query, only: [from: 2, subquery: 1]
 
   alias Ecto.{Changeset, Multi, Repo}
+  alias Explorer.Celo.EpochUtil
   alias Explorer.Chain.{Block, CeloPendingEpochOperation, Import, PendingBlockOperation, Transaction}
   alias Explorer.Chain.Block.Reward
   alias Explorer.Chain.Import.Runner
@@ -332,10 +333,6 @@ defmodule Explorer.Chain.Import.Runner.Blocks do
     lose_consensus(ExplorerRepo, [], block_numbers, [], opts)
   end
 
-  defp trace_minimal_block_height do
-    EthereumJSONRPC.first_block_to_fetch(:trace_first_block)
-  end
-
   defp new_pending_operations(repo, nonconsensus_hashes, hashes, %{timeout: timeout, timestamps: timestamps}) do
     if Application.get_env(:explorer, :json_rpc_named_arguments)[:variant] == EthereumJSONRPC.RSK do
       {:ok, []}
@@ -371,14 +368,14 @@ defmodule Explorer.Chain.Import.Runner.Blocks do
         |> Enum.map(& &1.number)
         |> MapSet.new()
         |> MapSet.to_list()
-        |> Enum.filter(&(rem(&1, 17_280) == 0))
+        |> Enum.filter(fn block_number -> EpochUtil.is_epoch_block?(block_number) end)
         |> Enum.map(&Enum.find(changes_list, fn block -> block.number == &1 end))
-        |> Enum.map(&%{block_hash: &1.hash, fetch_epoch_rewards: true, fetch_voter_votes: true})
+        |> Enum.map(&%{block_number: &1.number, fetch_epoch_rewards: true, election_rewards: true})
 
       Import.insert_changes_list(
         repo,
         celo_pending_ops,
-        conflict_target: :block_hash,
+        conflict_target: :block_number,
         on_conflict: CeloPendingEpochOperation.default_on_conflict(),
         for: CeloPendingEpochOperation,
         returning: true,

@@ -81,12 +81,12 @@ defmodule Explorer.Chain do
     BlockCount,
     BlockNumber,
     Blocks,
-    GasUsage,
     TokenExchangeRate,
-    TransactionCount,
     Transactions,
     Uncles
   }
+
+  alias Explorer.Chain.Celo.TransactionStats, as: CeloTxStats
 
   alias Explorer.Chain.Import.Runner
   alias Explorer.Chain.InternalTransaction.{CallType, Type}
@@ -303,7 +303,7 @@ defmodule Explorer.Chain do
     query
     |> InternalTransaction.where_is_different_from_parent_transaction()
     |> InternalTransaction.where_block_number_is_not_null()
-    |> page_internal_transaction(paging_options)
+    |> page_internal_transaction(paging_options, %{index_int_tx_desc_order: true})
     |> limit(^paging_options.page_size)
     |> order_by(
       [it],
@@ -2838,7 +2838,8 @@ defmodule Explorer.Chain do
     query =
       from(
         b in Block,
-        join: celo_pending_ops in assoc(b, :celo_pending_epoch_operations),
+        join: celo_pending_ops in Chain.CeloPendingEpochOperation,
+        on: b.number == celo_pending_ops.block_number,
         where: celo_pending_ops.fetch_epoch_rewards,
         select: %{block_number: b.number, block_hash: b.hash}
       )
@@ -2846,35 +2847,19 @@ defmodule Explorer.Chain do
     Repo.stream_reduce(query, initial, reducer)
   end
 
-  @spec stream_blocks_with_unfetched_validator_group_data(
+  @spec stream_blocks_with_unfetched_election_rewards(
           initial :: accumulator,
           reducer :: (entry :: term(), accumulator -> accumulator)
         ) :: {:ok, accumulator}
         when accumulator: term()
-  def stream_blocks_with_unfetched_validator_group_data(initial, reducer) when is_function(reducer, 2) do
+  def stream_blocks_with_unfetched_election_rewards(initial, reducer) when is_function(reducer, 2) do
     query =
       from(
         b in Block,
-        join: celo_pending_ops in assoc(b, :celo_pending_epoch_operations),
-        where: celo_pending_ops.fetch_validator_group_data,
-        select: %{block_number: b.number, block_hash: b.hash}
-      )
-
-    Repo.stream_reduce(query, initial, reducer)
-  end
-
-  @spec stream_blocks_with_unfetched_voter_votes(
-          initial :: accumulator,
-          reducer :: (entry :: term(), accumulator -> accumulator)
-        ) :: {:ok, accumulator}
-        when accumulator: term()
-  def stream_blocks_with_unfetched_voter_votes(initial, reducer) when is_function(reducer, 2) do
-    query =
-      from(
-        b in Block,
-        join: celo_pending_ops in assoc(b, :celo_pending_epoch_operations),
-        where: celo_pending_ops.fetch_voter_votes,
-        select: %{block_number: b.number, block_hash: b.hash},
+        join: celo_pending_ops in Chain.CeloPendingEpochOperation,
+        on: b.number == celo_pending_ops.block_number,
+        where: celo_pending_ops.election_rewards,
+        select: %{block_number: b.number, block_timestamp: b.timestamp},
         order_by: [asc: b.number]
       )
 
@@ -3185,6 +3170,11 @@ defmodule Explorer.Chain do
   def fetch_min_missing_block_cache do
     max_block_number = BlockNumber.get_max()
 
+    min_missing_block_number =
+      "min_missing_block_number"
+      |> Chain.get_last_fetched_counter()
+      |> Decimal.to_integer()
+
     if max_block_number > 0 do
       query =
         from(b in Block,
@@ -3192,10 +3182,11 @@ defmodule Explorer.Chain do
             missing_range in fragment(
               """
                 (SELECT b1.number
-                FROM generate_series(0, (?)::integer) AS b1(number)
+                FROM generate_series((?)::integer, (?)::integer) AS b1(number)
                 WHERE NOT EXISTS
                   (SELECT 1 FROM blocks b2 WHERE b2.number=b1.number AND b2.consensus))
               """,
+              ^min_missing_block_number,
               ^max_block_number
             ),
           on: b.number == missing_range.number,
@@ -3570,6 +3561,27 @@ defmodule Explorer.Chain do
   end
 
   @doc """
+  Returns the list of empty blocks from the DB which have not marked with `t:Explorer.Chain.Block.is_empty/0`.
+  This query used for initializtion of Indexer.EmptyBlocksSanitizer
+  """
+  def unprocessed_empty_blocks_query_list(limit) do
+    query =
+      from(block in Block,
+        left_join: transaction in Transaction,
+        on: block.number == transaction.block_number,
+        where: is_nil(transaction.block_number),
+        where: is_nil(block.is_empty),
+        where: block.consensus == true,
+        select: {block.number, block.hash},
+        order_by: [desc: block.number],
+        limit: ^limit
+      )
+
+    query
+    |> Repo.all(timeout: :infinity)
+  end
+
+  @doc """
   The `string` must start with `0x`, then is converted to an integer and then to `t:Explorer.Chain.Hash.Address.t/0`.
 
       iex> Explorer.Chain.string_to_address_hash("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed")
@@ -3646,38 +3658,36 @@ defmodule Explorer.Chain do
   Estimated count of `t:Explorer.Chain.Transaction.t/0`.
 
   Estimated count of both collated and pending transactions using the transactions table statistics.
+
+  Celo changes: Implemented via db trigger mechanism on `transactions` table directly and returns accurate tx count
+    with fallback to gc estimate.
   """
   @spec transaction_estimated_count() :: non_neg_integer()
   def transaction_estimated_count do
-    cached_value = TransactionCount.get_count()
+    count = CeloTxStats.transaction_count()
 
-    if is_nil(cached_value) do
-      count = Chain.get_last_fetched_counter("total_transaction_count")
+    case count do
+      nil ->
+        Logger.warn("Couldn't retrieve tx count from celo_transaction_stats - falling back to PG gc estimation")
 
-      case count do
-        nil ->
-          %Postgrex.Result{rows: [[rows]]} =
-            SQL.query!(Repo, "SELECT reltuples::BIGINT AS estimate FROM pg_class WHERE relname='transactions'")
+        %Postgrex.Result{rows: [[rows]]} =
+          SQL.query!(Repo, "SELECT reltuples::BIGINT AS estimate FROM pg_class WHERE relname='transactions'")
 
-          rows
+        rows
 
-        _ ->
-          count
-          |> Decimal.to_integer()
-      end
-    else
-      cached_value
+      n ->
+        n
     end
   end
 
   @spec total_gas_usage() :: non_neg_integer()
   def total_gas_usage do
-    cached_value = GasUsage.get_sum()
+    total_gas = CeloTxStats.total_gas()
 
-    if is_nil(cached_value) do
+    if is_nil(total_gas) do
       0
     else
-      cached_value
+      total_gas
     end
   end
 
@@ -4136,6 +4146,7 @@ defmodule Explorer.Chain do
       new_contract
       |> SmartContract.changeset(attrs)
       |> Changeset.put_change(:external_libraries, external_libraries)
+      |> apply_smart_contract_contract_code_md5_changeset
 
     new_contract_additional_source = %SmartContractAdditionalSource{}
 
@@ -4189,6 +4200,18 @@ defmodule Explorer.Chain do
     end
   end
 
+  defp apply_smart_contract_contract_code_md5_changeset(changeset) do
+    address_hash = Changeset.get_field(changeset, :address_hash)
+
+    case Repo.get(Address, address_hash) do
+      %Address{} = address ->
+        Changeset.put_change(changeset, :contract_byte_code_md5, address |> Address.contract_code_md5())
+
+      _ ->
+        changeset
+    end
+  end
+
   @doc """
   Updates a `t:SmartContract.t/0`.
 
@@ -4220,6 +4243,7 @@ defmodule Explorer.Chain do
       smart_contract
       |> SmartContract.changeset(attrs)
       |> Changeset.put_change(:external_libraries, external_libraries)
+      |> apply_smart_contract_contract_code_md5_changeset
 
     new_contract_additional_source = %SmartContractAdditionalSource{}
 
@@ -4401,19 +4425,13 @@ defmodule Explorer.Chain do
 
         case contract_code do
           %Data{bytes: contract_code_bytes} ->
-            contract_code_md5 =
-              Base.encode16(:crypto.hash(:md5, "\\x" <> Base.encode16(contract_code_bytes, case: :lower)),
-                case: :lower
-              )
+            contract_code_md5 = Address.contract_code_md5(contract_code_bytes)
 
             verified_contract_twin_query =
               from(
-                address in Address,
-                inner_join: smart_contract in SmartContract,
-                on: address.hash == smart_contract.address_hash,
-                where: fragment("md5(contract_code::text)") == ^contract_code_md5,
-                where: address.hash != ^target_address_hash,
-                select: smart_contract,
+                sc in SmartContract,
+                where: sc.contract_byte_code_md5 == ^contract_code_md5,
+                where: sc.address_hash != ^target_address_hash,
                 limit: 1
               )
 
@@ -4674,23 +4692,47 @@ defmodule Explorer.Chain do
     where(query, [coin_balance], coin_balance.block_number < ^block_number)
   end
 
-  defp page_internal_transaction(query, %PagingOptions{key: nil}), do: query
+  defp page_internal_transaction(_, _, _ \\ %{index_int_tx_desc_order: false})
 
-  defp page_internal_transaction(query, %PagingOptions{key: {block_number, transaction_index, index}}) do
-    where(
-      query,
-      [internal_transaction],
-      internal_transaction.block_number < ^block_number or
-        (internal_transaction.block_number == ^block_number and
-           internal_transaction.transaction_index < ^transaction_index) or
-        (internal_transaction.block_number == ^block_number and
-           internal_transaction.transaction_index == ^transaction_index and internal_transaction.index < ^index)
-    )
+  defp page_internal_transaction(query, %PagingOptions{key: nil}, _), do: query
+
+  defp page_internal_transaction(query, %PagingOptions{key: {block_number, transaction_index, index}}, %{
+         index_int_tx_desc_order: desc
+       }) do
+    hardcoded_where_for_page_int_tx(query, block_number, transaction_index, index, desc)
   end
 
-  defp page_internal_transaction(query, %PagingOptions{key: {index}}) do
-    where(query, [internal_transaction], internal_transaction.index > ^index)
+  defp page_internal_transaction(query, %PagingOptions{key: {index}}, %{index_int_tx_desc_order: desc}) do
+    if desc do
+      where(query, [internal_transaction], internal_transaction.index < ^index)
+    else
+      where(query, [internal_transaction], internal_transaction.index > ^index)
+    end
   end
+
+  defp hardcoded_where_for_page_int_tx(query, block_number, transaction_index, index, false),
+    do:
+      where(
+        query,
+        [internal_transaction],
+        internal_transaction.block_number < ^block_number or
+          (internal_transaction.block_number == ^block_number and
+             internal_transaction.transaction_index < ^transaction_index) or
+          (internal_transaction.block_number == ^block_number and
+             internal_transaction.transaction_index == ^transaction_index and internal_transaction.index > ^index)
+      )
+
+  defp hardcoded_where_for_page_int_tx(query, block_number, transaction_index, index, true),
+    do:
+      where(
+        query,
+        [internal_transaction],
+        internal_transaction.block_number < ^block_number or
+          (internal_transaction.block_number == ^block_number and
+             internal_transaction.transaction_index < ^transaction_index) or
+          (internal_transaction.block_number == ^block_number and
+             internal_transaction.transaction_index == ^transaction_index and internal_transaction.index < ^index)
+      )
 
   defp page_logs(query, %PagingOptions{key: nil}), do: query
 
