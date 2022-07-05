@@ -9,6 +9,7 @@ defmodule Explorer.Chain.Import.Runner.CeloElectionRewards do
   alias Explorer.Chain.CeloElectionRewards, as: CeloElectionRewardsChain
   alias Explorer.Chain.{CeloPendingEpochOperation, Import}
   alias Explorer.Chain.Import.Runner.Util
+  alias Explorer.Repo, as: ExplorerRepo
 
   import Ecto.Query, only: [from: 2]
 
@@ -44,16 +45,16 @@ defmodule Explorer.Chain.Import.Runner.CeloElectionRewards do
       end)
 
     multi_chain
-    |> Multi.run(:falsify_election_rewards, fn _, _ ->
+    |> Multi.run(:delete_celo_pending_epoch_operation, fn _, _ ->
       [first_reward | _] = changes_list
-
-      changes =
-        CeloPendingEpochOperation.falsify_celo_pending_epoch_operation(
-          first_reward.block_number,
-          :election_rewards
+      query =
+        from(cpeo in CeloPendingEpochOperation,
+          where: cpeo.block_number == ^first_reward.block_number
         )
 
-      {:ok, changes}
+      {deleted_count, _} = ExplorerRepo.delete_all(query)
+
+      {:ok, deleted_count}
     end)
   end
 

@@ -9,7 +9,7 @@ defmodule Indexer.Fetcher.CeloElectionRewardsTest do
 
   alias Explorer.Celo.ContractEvents.Election.ValidatorGroupVoteActivatedEvent
   alias Explorer.Celo.ContractEvents.Validators.ValidatorEpochPaymentDistributedEvent
-  alias Explorer.Chain.{Address, Block, CeloElectionRewards, Wei}
+  alias Explorer.Chain.{Address, Block, CeloElectionRewards, CeloEpochRewards, Wei}
   alias Indexer.Fetcher.CeloElectionRewards, as: CeloElectionRewardsFetcher
 
   @moduletag :capture_log
@@ -35,8 +35,8 @@ defmodule Indexer.Fetcher.CeloElectionRewardsTest do
     }
   end
 
-  describe "async_fetch/1" do
-    setup [:save_voter_contract_events_and_start_fetcher]
+  describe "async_fetch for voter rewards" do
+    setup [:save_voter_contract_events_and_start_fetcher, :setup_votes_mox]
 
     test "saves voter reward to db", context do
       CeloElectionRewardsFetcher.async_fetch([
@@ -60,6 +60,54 @@ defmodule Indexer.Fetcher.CeloElectionRewardsTest do
     end
   end
 
+  describe "async_fetch for epoch rewards" do
+    setup [:save_voter_contract_events_and_start_fetcher, :setup_votes_mox, :setup_epoch_mox]
+
+    test "saves epoch reward to db", context do
+      CeloElectionRewardsFetcher.async_fetch([
+        %{
+          block_hash: context.last_block_in_epoch_hash,
+          block_number: context.last_block_in_epoch_number,
+          block_timestamp: DateTime.utc_now()
+        }
+      ])
+
+      wait_for_results(fn ->
+        assert Repo.one!(from(rewards in CeloEpochRewards))
+      end)
+
+      # Terminates the process so it finishes all Ecto processes.
+      GenServer.stop(context.pid)
+    end
+  end
+
+  describe "async_fetch for epoch rewards when an error occurs while storing epoch rewards" do
+    setup [:save_voter_contract_events_and_start_fetcher, :setup_votes_mox, :setup_epoch_mox]
+
+    test "does not delete the celo pending epoch operation for this block", context do
+      Repo.insert %CeloEpochRewards{
+        block_hash: context.last_block_in_epoch_hash,
+        block_number: context.last_block_in_epoch_number
+      }
+
+      CeloElectionRewardsFetcher.async_fetch([
+        %{
+          block_hash: context.last_block_in_epoch_hash,
+          block_number: context.last_block_in_epoch_number,
+          block_timestamp: DateTime.utc_now()
+        }
+      ])
+
+      Process.sleep(5_000)
+      rewards = Repo.all(from rew in CeloEpochRewards)
+      IO.inspect(rewards, label: "rewz")
+      assert count(Explorer.Chain.CeloPendingEpochOperation) == 1
+
+      # Terminates the process so it finishes all Ecto processes.
+      GenServer.stop(context.pid)
+    end
+  end
+
   describe "init/2" do
     test "buffers unindexed epoch blocks", %{
       json_rpc_named_arguments: json_rpc_named_arguments
@@ -74,11 +122,11 @@ defmodule Indexer.Fetcher.CeloElectionRewardsTest do
              ) == [%{block_number: block.number, block_timestamp: block.timestamp}]
     end
 
-    test "does not buffer blocks with fetched election rewards", %{
+    test "does not buffer blocks with fetched rewards", %{
       json_rpc_named_arguments: json_rpc_named_arguments
     } do
       block = insert(:block)
-      insert(:celo_pending_epoch_operations, block_number: block.number, election_rewards: false)
+      insert(:celo_pending_epoch_operations, block_number: block.number, fetch_rewards: false)
 
       assert CeloElectionRewardsFetcher.init(
                [],
@@ -285,7 +333,7 @@ defmodule Indexer.Fetcher.CeloElectionRewardsTest do
     end
   end
 
-  defp setup_mox() do
+  defp setup_votes_mox(context) do
     set_test_addresses(%{
       "Election" => "0x8d6677192144292870907e3fa8a5527fe55a7ff6"
     })
@@ -339,6 +387,8 @@ defmodule Indexer.Fetcher.CeloElectionRewardsTest do
         }
       end
     )
+
+    context
   end
 
   defp save_validator_and_group_contract_events(context) do
@@ -398,9 +448,9 @@ defmodule Indexer.Fetcher.CeloElectionRewardsTest do
     %Explorer.Chain.CeloCoreContract{address_hash: contract_hash} = insert(:core_contract)
 
     %Block{number: second_to_last_block_in_epoch_number} =
-      second_to_last_block_in_epoch = insert(:block, number: 17_279)
+      second_to_last_block_in_epoch = insert(:block, number: 172_799)
 
-    %Block{number: last_block_in_epoch_number} = insert(:block, number: 17_280)
+    %Block{hash: last_block_in_epoch_hash, number: last_block_in_epoch_number} = insert(:block, number: 172_800)
     log = insert(:log, block: second_to_last_block_in_epoch)
 
     insert(:celo_pending_epoch_operations, block_number: last_block_in_epoch_number)
@@ -417,11 +467,199 @@ defmodule Indexer.Fetcher.CeloElectionRewardsTest do
       }
     })
 
-    setup_mox()
-
     Map.merge(context, %{
+      last_block_in_epoch_hash: last_block_in_epoch_hash,
       last_block_in_epoch_number: last_block_in_epoch_number,
       pid: pid
     })
+  end
+
+  defp setup_epoch_mox(context) do
+    set_test_addresses(%{
+      "EpochRewards" => "0x07f007d389883622ef8d4d347b3f78007f28d8b7",
+      "LockedGold" => "0x6cc083aed9e3ebe302a6336dbc7c921c9f03349e",
+      "Election" => "0x8d6677192144292870907e3fa8a5527fe55a7ff6",
+      "Reserve" => "0x9380fa34fd9e4fd14c06305fd7b6199089ed4eb9",
+      "GoldToken" => "0x471ece3750da237f93b8e339c536989b8978a438",
+      "StableToken" => "0x765de816845861e75a25fca122bb6898b8b1282a"
+    })
+
+    expect(
+      EthereumJSONRPC.Mox,
+      :json_rpc,
+      fn [
+           %{
+             id: calculateTargetEpochRewards,
+             jsonrpc: "2.0",
+             method: "eth_call",
+             params: [%{data: "0x64347043", to: _}, _]
+           },
+           %{
+             id: getTargetGoldTotalSupply,
+             jsonrpc: "2.0",
+             method: "eth_call",
+             params: [%{data: "0x5049890f", to: _}, _]
+           },
+           %{
+             id: getRewardsMultiplier,
+             jsonrpc: "2.0",
+             method: "eth_call",
+             params: [%{data: "0x0203ab24", to: _}, _]
+           },
+           %{
+             id: getRewardsMultiplierParameters,
+             jsonrpc: "2.0",
+             method: "eth_call",
+             params: [%{data: "0x5f396e48", to: _}, _]
+           },
+           %{
+             id: getTargetVotingYieldParameters,
+             jsonrpc: "2.0",
+             method: "eth_call",
+             params: [%{data: "0x171af90f", to: _}, _]
+           },
+           %{
+             id: getTargetVotingGoldFraction,
+             jsonrpc: "2.0",
+             method: "eth_call",
+             params: [%{data: "0xae098de2", to: _}, _]
+           },
+           %{
+             id: getVotingGoldFraction,
+             jsonrpc: "2.0",
+             method: "eth_call",
+             params: [%{data: "0xa1b95962", to: _}, _]
+           },
+           %{
+             id: getTotalLockedGold,
+             jsonrpc: "2.0",
+             method: "eth_call",
+             params: [%{data: "0x30a61d59", to: _}, _]
+           },
+           %{
+             id: getNonvotingLockedGold,
+             jsonrpc: "2.0",
+             method: "eth_call",
+             params: [%{data: "0x807876b7", to: _}, _]
+           },
+           %{
+             id: getTotalVotes,
+             jsonrpc: "2.0",
+             method: "eth_call",
+             params: [%{data: "0x9a0e7d66", to: _}, _]
+           },
+           %{
+             id: getElectableValidators,
+             jsonrpc: "2.0",
+             method: "eth_call",
+             params: [%{data: "0xf9f41a7a", to: _}, _]
+           },
+           %{
+             id: getReserveGoldBalance,
+             jsonrpc: "2.0",
+             method: "eth_call",
+             params: [%{data: "0x8d9a5e6f", to: _}, _]
+           },
+           %{
+             id: goldTotalSupply,
+             jsonrpc: "2.0",
+             method: "eth_call",
+             params: [%{data: "0x18160ddd", to: "0x471ece3750da237f93b8e339c536989b8978a438"}, _]
+           },
+           %{
+             id: stableUSDTotalSupply,
+             jsonrpc: "2.0",
+             method: "eth_call",
+             params: [%{data: "0x18160ddd", to: "0x765de816845861e75a25fca122bb6898b8b1282a"}, _]
+           }
+         ],
+         _ ->
+        {
+          :ok,
+          [
+            %{
+              id: calculateTargetEpochRewards,
+              jsonrpc: "2.0",
+              result:
+                "0x00000000000000000000000000000000000000000000000b25b7389d6e6f8233000000000000000000000000000000000000000000000583d67889a223c1b9ab00000000000000000000000000000000000000000000034b50882b7adf687bd70000000000000000000000000000000000000000000000035f8ddb4f56e8ddad"
+            },
+            %{
+              id: getTargetGoldTotalSupply,
+              jsonrpc: "2.0",
+              result: "0x000000000000000000000000000000000000000001f12657ea8a3cbb0ff9aa5d"
+            },
+            %{
+              id: getRewardsMultiplier,
+              jsonrpc: "2.0",
+              result: "0x00000000000000000000000000000000000000000000d3ea531c462b6d289800"
+            },
+            %{
+              id: getRewardsMultiplierParameters,
+              jsonrpc: "2.0",
+              result:
+                "0x00000000000000000000000000000000000000000001a784379d99db420000000000000000000000000000000000000000000000000069e10de76676d08000000000000000000000000000000000000000000000000422ca8b0a00a425000000"
+            },
+            %{
+              id: getTargetVotingYieldParameters,
+              jsonrpc: "2.0",
+              result:
+                "0x000000000000000000000000000000000000000000000008ac7230489e80000000000000000000000000000000000000000000000000001b1ae4d6e2ef5000000000000000000000000000000000000000000000000000000000000000000000"
+            },
+            %{
+              id: getTargetVotingGoldFraction,
+              jsonrpc: "2.0",
+              result: "0x0000000000000000000000000000000000000000000069e10de76676d0800000"
+            },
+            %{
+              id: getVotingGoldFraction,
+              jsonrpc: "2.0",
+              result: "0x0000000000000000000000000000000000000000000056e297f4f13e205a7f52"
+            },
+            %{
+              id: getTotalLockedGold,
+              jsonrpc: "2.0",
+              result: "0x000000000000000000000000000000000000000001059ec802d92a296076aedb"
+            },
+            %{
+              id: getNonvotingLockedGold,
+              jsonrpc: "2.0",
+              result: "0x00000000000000000000000000000000000000000012bb087e1546063ebff82e"
+            },
+            %{
+              id: getTotalVotes,
+              jsonrpc: "2.0",
+              result: "0x000000000000000000000000000000000000000000f2e3bf84c3e42321b6b6ad"
+            },
+            %{
+              id: getElectableValidators,
+              jsonrpc: "2.0",
+              result:
+                "0x0000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000006e"
+            },
+            %{
+              id: getReserveGoldBalance,
+              jsonrpc: "2.0",
+              result: "0x0000000000000000000000000000000000000000005f563e55a0348825d9cb68"
+            },
+            %{
+              id: goldTotalSupply,
+              jsonrpc: "2.0",
+              result: "0x000000000000000000000000000000000000000001f09bd2274f90dfe61df4d1"
+            },
+            %{
+              id: stableUSDTotalSupply,
+              jsonrpc: "2.0",
+              result: "0x00000000000000000000000000000000000000000004498a2f3c39c0d4b5ebd9"
+            }
+          ]
+        }
+      end
+    )
+
+    context
+  end
+
+  defp count(schema) do
+    Repo.one!(select(schema, fragment("COUNT(*)")))
   end
 end
