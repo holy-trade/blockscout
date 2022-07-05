@@ -58,7 +58,6 @@
 - [#4777](https://github.com/blockscout/blockscout/pull/4777), [#4791](https://github.com/blockscout/blockscout/pull/4791) - Added decoding revert reason
 - [#4776](https://github.com/blockscout/blockscout/pull/4776) - Added view for unsuccessfully fetched values from read functions
 - [#4761](https://github.com/blockscout/blockscout/pull/4761) - ERC-1155 support
-
 - [#4667](https://github.com/blockscout/blockscout/pull/4667) - Transaction Page: Add expand/collapse button for long contract method data
 - [#4641](https://github.com/blockscout/blockscout/pull/4641) - Improve Read Contract page logic
 - [#4660](https://github.com/blockscout/blockscout/pull/4660) - Save Sourcify path instead of filename
