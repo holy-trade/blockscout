@@ -1,6 +1,8 @@
 defmodule BlockScoutWeb.API.RPC.AddressController do
   use BlockScoutWeb, :controller
 
+  @dialyzer {:no_match, list_tokens: 1}
+
   alias BlockScoutWeb.API.RPC.Helpers
   alias Explorer.{Chain, Etherscan}
   alias Explorer.Chain.{Address, CeloUnlocked, Wei}
@@ -569,7 +571,7 @@ defmodule BlockScoutWeb.API.RPC.AddressController do
 
   defp list_tokens(address_hash) do
     case Etherscan.list_tokens(address_hash) do
-      empty_list when is_list(empty_list) and empty_list == [] -> {:error, :not_found}
+      [] -> {:error, :not_found}
       token_list -> {:ok, token_list}
     end
   end
