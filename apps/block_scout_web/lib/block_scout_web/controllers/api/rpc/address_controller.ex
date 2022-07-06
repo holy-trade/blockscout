@@ -569,7 +569,7 @@ defmodule BlockScoutWeb.API.RPC.AddressController do
 
   defp list_tokens(address_hash) do
     case Etherscan.list_tokens(address_hash) do
-      empty_list when is_list(empty_list) and length(empty_list) == 0 -> {:error, :not_found}
+      empty_list when is_list(empty_list) and empty_list == [] -> {:error, :not_found}
       token_list -> {:ok, token_list}
     end
   end
