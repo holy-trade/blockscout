@@ -1,8 +1,6 @@
 defmodule BlockScoutWeb.API.RPC.AddressController do
   use BlockScoutWeb, :controller
 
-  @dialyzer {:no_match, list_tokens: 1}
-
   alias BlockScoutWeb.API.RPC.Helpers
   alias Explorer.{Chain, Etherscan}
   alias Explorer.Chain.{Address, CeloUnlocked, Wei}
