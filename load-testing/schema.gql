@@ -150,6 +150,7 @@ type CeloTransfer implements Node {
   token: String
   tokenId: Decimal
   tokenType: String
+  tokenId: Decimal
   transactionHash: FullHash
   value: Decimal
 }
