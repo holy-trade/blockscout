@@ -98,6 +98,8 @@ defmodule Indexer.Transform.TokenTransfers do
       amount: Decimal.new(tx.value),
       block_number: tx.block_number,
       block_hash: tx.block_hash,
+      # Celo token transfers discerned from itx do not have a valid log index, so an id is calculated here to
+      # satisfy schema constraints -(tx.index + tx.transaction_index * 10_000_000)
       log_index: -(tx.index + tx.transaction_index * 1000 + 1_000_000),
       from_address_hash: tx.from_address_hash,
       to_address_hash: to_hash,
